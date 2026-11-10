@@ -69,23 +69,24 @@ pnpmなら `pnpm add packing-bingo`、yarnなら `yarn add packing-bingo` です
 import { PackingBingo, type BingoItem } from "packing-bingo";
 
 // 沖縄の修学旅行の持ち物。ちょうど16個、左上から横に4つずつ並びます。
+// \u200B は「狭い画面ではここで改行してよい」という目印です（画面には出ません）。
 const items: BingoItem[] = [
-  { emoji: "📖", label: "旅のしおり" },
-  { emoji: "🪪", label: "生徒手帳" },
-  { emoji: "🏥", label: "保険証コピー" },
-  { emoji: "👛", label: "おこづかい" },
-  { emoji: "👕", label: "着替え" },
-  { emoji: "🩱", label: "水着" },
-  { emoji: "🧴", label: "日焼け止め" },
-  { emoji: "🧢", label: "帽子" },
-  { emoji: "🕶️", label: "サングラス" },
-  { emoji: "🩴", label: "ビーチサンダル" },
-  { emoji: "🪥", label: "洗面用具" },
-  { emoji: "🛁", label: "タオル" },
-  { emoji: "💊", label: "常備薬・酔い止め" },
-  { emoji: "☂️", label: "折りたたみ傘" },
+  { emoji: "👛", label: "財布" },
+  { emoji: "📱", label: "スマホ" },
+  { emoji: "🔋", label: "モバイル\u200B充電器" },
+  { emoji: "📋", label: "健康調査票" },
+  { emoji: "🪪", label: "マイナカード\u200Bまたは保険証" },
+  { emoji: "📖", label: "しおり" },
+  { emoji: "😷", label: "マスク" },
+  { emoji: "🤧", label: "ハンカチ" },
+  { emoji: "💊", label: "常備薬" },
   { emoji: "🛍️", label: "ビニール袋" },
-  { emoji: "📱", label: "スマホ・充電器" },
+  { emoji: "🧤", label: "軍手（学校支給）" },
+  { emoji: "🔦", label: "ヘッドライト" },
+  { emoji: "👕", label: "ジャージ" },
+  { emoji: "☔", label: "雨具" },
+  { emoji: "🛁", label: "タオル" },
+  { emoji: "🧴", label: "日焼け止め" },
 ];
 
 export function OkinawaPackingBingo() {
@@ -135,14 +136,14 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
   PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
     tag: "沖縄修学旅行",
     items: [
-      { emoji: "📖", label: "旅のしおり" }, { emoji: "🪪", label: "生徒手帳" },
-      { emoji: "🏥", label: "保険証コピー" }, { emoji: "👛", label: "おこづかい" },
-      { emoji: "👕", label: "着替え" }, { emoji: "🩱", label: "水着" },
-      { emoji: "🧴", label: "日焼け止め" }, { emoji: "🧢", label: "帽子" },
-      { emoji: "🕶️", label: "サングラス" }, { emoji: "🩴", label: "ビーチサンダル" },
-      { emoji: "🪥", label: "洗面用具" }, { emoji: "🛁", label: "タオル" },
-      { emoji: "💊", label: "常備薬・酔い止め" }, { emoji: "☂️", label: "折りたたみ傘" },
-      { emoji: "🛍️", label: "ビニール袋" }, { emoji: "📱", label: "スマホ・充電器" },
+      { emoji: "👛", label: "財布" }, { emoji: "📱", label: "スマホ" },
+      { emoji: "🔋", label: "モバイル\u200B充電器" }, { emoji: "📋", label: "健康調査票" },
+      { emoji: "🪪", label: "マイナカード\u200Bまたは保険証" }, { emoji: "📖", label: "しおり" },
+      { emoji: "😷", label: "マスク" }, { emoji: "🤧", label: "ハンカチ" },
+      { emoji: "💊", label: "常備薬" }, { emoji: "🛍️", label: "ビニール袋" },
+      { emoji: "🧤", label: "軍手（学校支給）" }, { emoji: "🔦", label: "ヘッドライト" },
+      { emoji: "👕", label: "ジャージ" }, { emoji: "☔", label: "雨具" },
+      { emoji: "🛁", label: "タオル" }, { emoji: "🧴", label: "日焼け止め" },
     ],
   });
 </script>
@@ -168,8 +169,8 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
 import { PackingBingo, en, type BingoItem } from "packing-bingo";
 
 const items: BingoItem[] = [
-  { emoji: "🩱", label: "Swimsuit" },
-  { emoji: "🧴", label: "Sunscreen" },
+  { emoji: "👛", label: "Wallet" },
+  { emoji: "📱", label: "Phone" },
   // … ちょうど16個、左上から横に1行ずつ
 ];
 
@@ -178,7 +179,7 @@ const items: BingoItem[] = [
 
 - `items` はちょうど16個にしてください。それ以外の数だと `[packing-bingo] "items" must have exactly 16 entries` というエラーになります。
 - `messages` は日本語の既定値の上に重なるので、`messages={{ reset: "やり直す" }}` のように一部の文言だけを変えられます。`en` は英語の文言一式です。キーの一覧は[文言のキー](#文言のキー)にあります。
-- 狭いカードでは、ラベルは `・` の後ろで折り返します。`常備薬・酔い止め` は「常備薬・」と「酔い止め」の2行になります。
+- 狭いカードでは、ラベルは `・` の後ろで折り返します。`常備薬・酔い止め` は「常備薬・」と「酔い止め」の2行になります。`・` を入れたくない長いラベルは、`\u200B`（画面には出ない改行位置の目印）を入れた場所で折り返します。`"モバイル\u200B充電器"` は「モバイル」と「充電器」の2行になります。スマホの幅では、1行に入るのは6文字ほどです。
 
 ### 保存のしかたを変える
 
