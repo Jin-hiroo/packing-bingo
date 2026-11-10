@@ -14,7 +14,7 @@ export const CSS = `
 @keyframes pkb-shake{10%,90%{transform:translate(-1px,1px)}20%,80%{transform:translate(3px,-2px)}30%,50%,70%{transform:translate(-6px,2px)}40%,60%{transform:translate(6px,-1px)}}
 .pkb-board.pkb-punch{animation:pkb-punch .4s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pkb-punch{30%{transform:scale(1.018)}}
-.pkb-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+.pkb-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 16px;margin-bottom:18px}
 .pkb-tags{display:flex;gap:8px;align-items:center}
 .pkb-kicker{display:inline-block;background:var(--pk-ink);color:var(--pk-sun);font-weight:800;font-size:11px;letter-spacing:.14em;padding:4px 10px;border-radius:999px}
 .pkb-kicker.pkb-gold{color:#fff;background:linear-gradient(90deg,#E8473B,#FF9F1C,#1FA971,#2F6FED,#E8473B);background-size:200% 100%;animation:pkb-rb 2s linear infinite}
@@ -22,7 +22,7 @@ export const CSS = `
 .pkb button{font-family:var(--pk-body)}
 .pkb-snd{appearance:none;border:2px solid var(--pk-ink);background:var(--pk-paper);border-radius:999px;padding:2px 9px;font-weight:800;font-size:11px;line-height:1.4;color:var(--pk-ink);cursor:pointer}
 .pkb-title{font-family:var(--pk-display);font-weight:400;font-size:34px;line-height:1.15;margin-top:8px;letter-spacing:.02em;color:inherit}
-.pkb-sub{font-weight:800;font-size:13px;margin-top:4px}
+.pkb-sub{font-weight:800;font-size:13px;margin-top:4px;word-break:auto-phrase}
 .pkb-side{display:flex;flex-direction:column;gap:8px;flex:none}
 .pkb-score{display:flex;gap:10px}
 .pkb-pill{min-width:78px;background:var(--pk-paper);border:2.5px solid var(--pk-ink);border-radius:14px;padding:6px 10px 5px;text-align:center;box-shadow:3px 3px 0 var(--pk-ink)}
@@ -41,8 +41,8 @@ export const CSS = `
 .pkb-combo.pkb-on .pkb-bar i{animation:pkb-drain 2.5s linear forwards}
 @keyframes pkb-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .pkb-gw{position:relative}
-.pkb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.pkb-tile{position:relative;aspect-ratio:1/.82;background:var(--pk-paper);border:2.5px solid var(--pk-ink);border-radius:16px;box-shadow:4px 4px 0 var(--pk-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s,background-color .25s}
+.pkb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pkb-tile{position:relative;min-width:0;place-self:stretch;aspect-ratio:1/.82;background:var(--pk-paper);border:2.5px solid var(--pk-ink);border-radius:16px;box-shadow:4px 4px 0 var(--pk-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s,background-color .25s}
 .pkb-tile:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--pk-ink)}
 .pkb-tile input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 .pkb-tile:has(input:focus-visible){outline:3px solid var(--pk-ink);outline-offset:3px}
@@ -71,7 +71,7 @@ export const CSS = `
 .pkb-lines .pkb-o{stroke:var(--pk-ink);stroke-width:6}
 .pkb-lines .pkb-draw line{animation:pkb-draw .45s ease-out .3s both}
 @keyframes pkb-draw{from{stroke-dashoffset:1}}
-.pkb-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;font-weight:800;font-size:13px}
+.pkb-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;font-weight:800;font-size:13px;word-break:auto-phrase}
 .pkb-reset{appearance:none;flex:none;border:2px solid var(--pk-ink);background:transparent;border-radius:999px;padding:5px 12px;font-weight:800;font-size:12px;line-height:1.4;color:var(--pk-ink);cursor:pointer}
 .pkb-flash{position:absolute;inset:0;z-index:7;background:#fff;opacity:0;pointer-events:none}
 .pkb-flash.pkb-go{animation:pkb-flash .4s ease-out}
@@ -86,7 +86,7 @@ export const CSS = `
 .pkb-float{position:absolute;z-index:11;pointer-events:none;white-space:nowrap;font-family:var(--pk-display);font-weight:400;line-height:1;-webkit-text-stroke:4px var(--pk-ink);paint-order:stroke fill;transform:translate(-50%,-50%);animation:pkb-rise .95s cubic-bezier(.2,.9,.3,1) both}
 .pkb-float.pkb-pt{font-size:22px;color:var(--pk-paper)}
 .pkb-float.pkb-cmb{font-size:17px}
-.pkb-float.pkb-big{font-size:clamp(20px,6cqi,34px);color:#FFE066}
+.pkb-float.pkb-big{font-size:clamp(14px,5.6cqi,34px);color:#FFE066}
 .pkb-float.pkb-rch{font-size:20px;color:var(--pk-red);-webkit-text-stroke:4px var(--pk-paper)}
 @keyframes pkb-rise{0%{opacity:0;transform:translate(-50%,-20%) scale(.4)}18%{opacity:1;transform:translate(-50%,-60%) scale(1.2)}30%{transform:translate(-50%,-70%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-190%) scale(1)}}
 .pkb-perfect{position:absolute;inset:0;z-index:8;display:grid;place-items:center;padding:20px;background:rgba(42,31,20,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
@@ -97,7 +97,7 @@ export const CSS = `
 .pkb-perfect.pkb-show .pkb-medal{animation:pkb-slam .38s cubic-bezier(.5,0,.75,0) .35s forwards}
 @keyframes pkb-slam{to{opacity:1;transform:rotate(-14deg) scale(1)}}
 .pkb-ptitle{font-family:var(--pk-display);font-weight:400;font-size:30px;line-height:1.3;color:inherit}
-.pkb-pbody{font-weight:800;font-size:13.5px;line-height:1.6;margin:6px 0 14px;white-space:pre-line}
+.pkb-pbody{font-weight:800;font-size:13.5px;line-height:1.6;margin:6px 0 14px;white-space:pre-line;word-break:auto-phrase}
 .pkb-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
 .pkb-stats>div{border:2px solid var(--pk-ink);border-radius:12px;padding:6px 4px 5px;background:#fff}
 .pkb-stats small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.1em}
@@ -108,6 +108,8 @@ export const CSS = `
 .pkb-demo{max-width:720px;margin:12px auto 4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--pk-body);font-size:12px;color:#666}
 .pkb-demo button{appearance:none;border:1px solid #ccc;background:#f3f3f3;color:#222;border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer}
 @container (max-width:560px){.pkb-board{padding:18px 14px 16px}.pkb-head{flex-direction:column;align-items:stretch;gap:12px}.pkb-score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pkb-pill,.pkb-pill.pkb-sc{min-width:0;padding:5px 4px 4px}.pkb-pill b{font-size:19px}.pkb-title{font-size:26px}.pkb-grid{gap:8px}.pkb-tile{border-radius:12px;box-shadow:3px 3px 0 var(--pk-ink);gap:3px;aspect-ratio:1/1}.pkb-emo{font-size:24px}.pkb-lbl{font-size:10.5px;padding:0 2px}.pkb-stamp{font-size:14px}.pkb-tile.pkb-reach::after{font-size:9px;padding:2px 5px;top:-9px;right:-5px}.pkb-lines .pkb-u{stroke-width:10}.pkb-lines .pkb-o{stroke-width:5}.pkb-banner::before{width:380px;height:380px;margin:-190px 0 0 -190px}.pkb-banner span{font-size:12px}.pkb-medal{width:96px;height:96px;font-size:20px}.pkb-card{padding:20px 14px 16px}.pkb-ptitle{font-size:24px}.pkb-stats b{font-size:17px}.pkb-float.pkb-pt{font-size:17px}.pkb-float.pkb-cmb{font-size:13px}}
+@container (max-width:400px){.pkb-board{padding:16px 10px 14px}.pkb-grid{gap:6px}.pkb-lbl{font-size:10px;padding:0 1px}.pkb-emo{font-size:22px}.pkb-stamp{font-size:13px}.pkb-foot{margin-top:14px;font-size:12px}.pkb-perfect{padding:12px}.pkb-stats{gap:6px}.pkb-stats>div{padding:6px 2px 5px}.pkb-stats small{letter-spacing:.02em}}
+@container (max-width:320px){.pkb-board{padding-inline:8px}.pkb-grid{gap:5px}.pkb-lbl{font-size:9.5px;padding:0}}
 @media (prefers-reduced-motion:reduce){.pkb-board.pkb-shake,.pkb-board.pkb-punch,.pkb-flash.pkb-go,.pkb-tile.pkb-hop,.pkb-tile.pkb-squash,.pkb-tile.pkb-reach,.pkb-tile.pkb-line::before,.pkb-pill.pkb-hot,.pkb-bump,.pkb-tile.pkb-reach::after,.pkb-banner::before,.pkb-lines .pkb-draw line,.pkb-kicker.pkb-gold{animation:none}.pkb-banner.pkb-show{animation:pkb-fade 1.8s forwards}.pkb-float{animation:pkb-fade 1s both}.pkb-perfect.pkb-show .pkb-medal{animation:none;opacity:1;transform:rotate(-14deg)}.pkb-card{transition:none}}
 @keyframes pkb-fade{0%,100%{opacity:0}15%,80%{opacity:1}}
 `;
