@@ -43,7 +43,7 @@ export interface PackingBingoOptions {
   title?: string;
   tag?: string;
   subtitle?: string;
-  /** Initial state: 16 booleans. */
+  /** Initial state (16 booleans), used when nothing is saved under `storageKey`. */
   defaultChecked?: readonly boolean[];
   /**
    * When true, taps don't change the card by themselves: they call `onChange` with the
@@ -746,9 +746,9 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     });
   }
 
-  // ---- initial state ----
-  let initial = options.defaultChecked ? normalize(options.defaultChecked) : null;
-  if (!initial && storageKey) {
+  // ---- initial state: saved progress, then defaultChecked, then the demo start ----
+  let initial: boolean[] | null = null;
+  if (storageKey) {
     try {
       const saved = JSON.parse(readStore(storageKey) ?? "null");
       if (Array.isArray(saved)) initial = normalize(saved);
@@ -756,6 +756,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       /* ignore broken saved data */
     }
   }
+  if (!initial && options.defaultChecked) initial = normalize(options.defaultChecked);
   if (!initial && demo) initial = demoStart();
   fit();
   baseline(initial ?? normalize(undefined));
