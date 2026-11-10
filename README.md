@@ -101,32 +101,41 @@ const items: BingoItem[] = [
 `storageKey` saves progress in one browser. To make progress follow a student to another device, keep the checks in your own state and pass them as `checked`, which makes the card controlled:
 
 ```tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PackingBingo } from "packing-bingo";
 
 export function PackingCard({ studentId }: { studentId: string }) {
   const [checked, setChecked] = useState<boolean[] | null>(null);
+  const saving = useRef(Promise.resolve());
 
   useEffect(() => {
+    let current = true; // ignore a response that arrives after the student has changed
     setChecked(null);
     fetch(`/api/packing/${studentId}`)
       .then((res) => res.json())
-      .then((data) => setChecked(data.checked ?? Array(16).fill(false)));
+      .then((data) => {
+        if (current) setChecked(data.checked ?? Array(16).fill(false));
+      });
+    return () => {
+      current = false;
+    };
   }, [studentId]);
 
   if (!checked) return null; // or a placeholder
 
-  return (
-    <PackingBingo
-      checked={checked}
-      onChange={(next) => {
-        setChecked(next);
-        fetch(`/api/packing/${studentId}`, { method: "PUT", body: JSON.stringify({ checked: next }) });
-      }}
-    />
-  );
+  const save = (next: boolean[]) => {
+    setChecked(next);
+    // Send one request at a time, so a slow earlier save can't overwrite a later one.
+    saving.current = saving.current
+      .then(() => fetch(`/api/packing/${studentId}`, { method: "PUT", body: JSON.stringify({ checked: next }) }))
+      .then(() => undefined, () => undefined);
+  };
+
+  return <PackingBingo checked={checked} onChange={save} />;
 }
 ```
+
+Students tap faster than requests finish, so the example sends the saves one after another, and it drops a load that arrives after `studentId` has changed. Each save sends all 16 checks, so a later save always holds the latest state.
 
 How a controlled card behaves:
 
@@ -267,7 +276,7 @@ interface PackingBingoState {
 ### Exports
 
 - `packing-bingo`: `PackingBingo`, `createPackingBingo`, `LINES`, `DEFAULT_ITEMS`, `ja`, `en`, and the types `PackingBingoProps`, `PackingBingoHandle`, `PackingBingoState`, `BingoItem`, `BingoEvent`, `PerfectEvent`, `Messages`, `PackingBingoOptions`, `PackingBingoInstance`.
-- `packing-bingo/core`: the same without the React component, so it doesn't import React.
+- `packing-bingo/core`: the same without the React component and its types (`PackingBingoProps`, `PackingBingoHandle`), so it doesn't import React.
 
 ## Integration notes
 
@@ -287,7 +296,7 @@ The card uses Dela Gothic One and M PLUS Rounded 1c. With `fonts={false}`, nothi
 
 ### Sound and vibration
 
-Sound is synthesized with the Web Audio API. The audio context is only created after the user has interacted with the page, so the browser shows no autoplay warnings. The 🔊 button's choice is stored in localStorage as `packing-bingo-muted` and applies to every card on your site. Taps and bingos vibrate where the Vibration API exists, which in practice means Android browsers.
+Sound is synthesized with the Web Audio API. The audio context is only created after the user has interacted with the page, so the browser shows no autoplay warnings. The 🔊 button's choice is stored in localStorage as `packing-bingo-muted`, and every card created afterwards starts with it, including after a reload. Cards already on screen keep their own setting. Taps and bingos vibrate where the Vibration API exists, which in practice means Android browsers.
 
 ### Saved data
 
@@ -325,7 +334,7 @@ const card = createPackingBingo(document.getElementById("bingo")!, {
 // card.reset(), card.getState(), card.setChecked(next, { animate: true }), card.destroy()
 ```
 
-It takes the same options as the React props, except that a controlled card is `controlled: true` plus `setChecked()`. Without `{ animate: true }`, `setChecked()` always applies quietly.
+Its options are the React props without `checked`, `className`, `style` and `ref` (type `PackingBingoOptions`). For a controlled card, pass `controlled: true` and update it with `setChecked()`. Without `{ animate: true }`, `setChecked()` always applies quietly.
 
 Without a bundler, load the browser build from a CDN. It defines a global `PackingBingo`:
 

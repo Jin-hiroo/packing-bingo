@@ -79,11 +79,10 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
     });
     inst.current = instance;
     return () => {
-      // Keep the current checks (including ones set through the ref) for the next build.
-      if (!controlled) {
-        latest.current = instance.getState().checked;
-        latestKey.current = config.storageKey;
-      }
+      // Keep the current checks (including ones set through the ref) for the next build, and
+      // always record their key, so they can't be carried into another key later.
+      if (!controlled) latest.current = instance.getState().checked;
+      latestKey.current = config.storageKey;
       instance.destroy();
       if (inst.current === instance) inst.current = null;
     };
