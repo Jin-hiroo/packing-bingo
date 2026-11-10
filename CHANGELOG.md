@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- New default items (`DEFAULT_ITEMS`), taken from a school's packing list: wallet, phone, power bank, health form, My Number or insurance card, trip booklet, mask, handkerchief, medicine, plastic bags, work gloves, headlamp, school tracksuit, rain gear, towel and sunscreen. Cards that use the default items and no `storageKey` start fresh, because their saved-progress key is derived from the items.
+
 ### Docs
 
+- The README quick start, the demo site and the example projects use the same 16 items as the new default.
+- The README explains how to mark where a long label without `・` may wrap.
 - A demo site on GitHub Pages (https://jin-hiroo.github.io/packing-bingo/), built from `site/` by a workflow on every push to `main`. Its embed code is taken from the README's quick start.
 - Runnable example projects in `examples/`: Next.js (App Router), Vite + React, and plain HTML.
 - The package's `homepage` points to the demo site.
