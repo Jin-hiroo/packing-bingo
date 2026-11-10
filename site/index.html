@@ -13,7 +13,7 @@
 :root{--ink:#2A1F14;--paper:#FFFDF6;--sun:#FFD54F;--red:#E8473B;--red-strong:#B83224;--mint:#BDEBD2;--muted:#6B5D4D;--line:#EADFC8;color-scheme:light}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;font-weight:500;line-height:1.75}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;font-weight:500;line-height:1.75;word-break:auto-phrase}
 a{color:inherit}
 .wrap{max-width:880px;margin:0 auto;padding:0 16px}
 .hero{background-color:var(--sun);background-image:radial-gradient(rgba(42,31,20,.12) 1.3px,transparent 1.6px);background-size:16px 16px;border-bottom:2.5px solid var(--ink);padding:44px 0 36px}
@@ -40,7 +40,7 @@ h3{font-size:17px;font-weight:800;margin:28px 0 8px}
 .examples li{border:2.5px solid var(--ink);border-radius:16px;background:#fff;padding:16px 18px;box-shadow:4px 4px 0 var(--ink)}
 .examples h3{margin:0 0 4px}
 .examples p{margin:0 0 10px;color:var(--muted);font-size:14.5px}
-.examples code{font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:#F6EEDB;border-radius:6px;padding:1px 6px;word-break:break-all}
+.examples code{font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:#F6EEDB;border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
 p code,li code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:#F6EEDB;border-radius:6px;padding:1px 5px}
 footer{padding:28px 0 48px;color:var(--muted);font-size:14px}
 @media (max-width:560px){.hero{padding:32px 0 28px}section{padding:36px 0}.code pre{font-size:12.5px;padding:44px 14px 14px}.code.short pre{padding:14px 100px 14px 14px}}
