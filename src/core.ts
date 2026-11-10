@@ -1,6 +1,7 @@
 import { DEFAULT_ITEMS, type BingoItem } from "./items";
 import { en, ja, type Messages } from "./messages";
 import { createSound } from "./sound";
+import { resolveStorageKey } from "./storage-key";
 import { CSS, FONT_URL } from "./styles";
 
 export { DEFAULT_ITEMS, ja, en };
@@ -50,7 +51,11 @@ export interface PackingBingoOptions {
    * requested state, and the card only changes through `setChecked`. (React's `checked` prop.)
    */
   controlled?: boolean;
-  /** Save and restore the checks in localStorage under this key. Ignored when controlled. */
+  /**
+   * Where the checks are saved in localStorage. By default (omitted) a key derived from the
+   * items is used, so progress is saved automatically; pass a string to choose the key, or null
+   * to turn saving off. Ignored when controlled. Demo cards only save when given a key.
+   */
   storageKey?: string | null;
   /** Start with sound on (default) or off. A choice made with the sound button is remembered. */
   sound?: boolean;
@@ -175,7 +180,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   if (options.tag != null) M.tag = options.tag;
   if (options.subtitle != null) M.subtitle = options.subtitle;
   const controlled = !!options.controlled;
-  const storageKey = controlled ? null : options.storageKey ?? null;
+  const storageKey = resolveStorageKey(options);
   const demo = !!options.demo;
   const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 

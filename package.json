@@ -1,6 +1,6 @@
 {
   "name": "packing-bingo",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A school-trip packing checklist that plays like bingo, as a React component (or plain JS): combos, fanfares and fireworks.",
   "license": "MIT",
   "author": "Jin-hiroo",
