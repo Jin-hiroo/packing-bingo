@@ -10,7 +10,7 @@ import {
 export interface PackingBingoProps extends Omit<PackingBingoOptions, "controlled" | "defaultChecked"> {
   /** Controlled state (16 booleans). Update it from `onChange`. */
   checked?: readonly boolean[];
-  /** Initial state for an uncontrolled card (16 booleans). */
+  /** Initial state for an uncontrolled card (16 booleans), used when nothing is saved under `storageKey`. */
   defaultChecked?: readonly boolean[];
   className?: string;
   style?: CSSProperties;
@@ -39,8 +39,10 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
   const controlled = checked !== undefined;
-  // The state to restore if the card has to be rebuilt (new items, title, …).
+  // The state to restore if the card has to be rebuilt (new items, title, …), and the storage
+  // key it belongs to: checks saved under one key must not carry over to another.
   const latest = useRef<readonly boolean[] | undefined>(checked ?? defaultChecked);
+  const latestKey = useRef(config.storageKey);
   if (controlled) latest.current = checked;
 
   // Rebuild only when something that shapes the markup changes. Message *functions* are left
@@ -67,7 +69,7 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
       ...config,
       messages: liveMessages,
       controlled,
-      defaultChecked: latest.current,
+      defaultChecked: controlled || latestKey.current === config.storageKey ? latest.current : defaultChecked,
       onChange: (next) => {
         if (!controlled) latest.current = next;
         callbacks.current.onChange?.(next);
@@ -78,7 +80,10 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
     inst.current = instance;
     return () => {
       // Keep the current checks (including ones set through the ref) for the next build.
-      if (!controlled) latest.current = instance.getState().checked;
+      if (!controlled) {
+        latest.current = instance.getState().checked;
+        latestKey.current = config.storageKey;
+      }
       instance.destroy();
       if (inst.current === instance) inst.current = null;
     };

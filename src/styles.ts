@@ -7,7 +7,7 @@ export const FONT_URL =
   "https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap";
 
 export const CSS = `
-.pkb{--pk-sun:var(--pkb-sun,#FFD54F);--pk-ink:var(--pkb-ink,#2A1F14);--pk-paper:var(--pkb-paper,#FFFDF6);--pk-red:var(--pkb-red,#E8473B);--pk-mint:var(--pkb-mint,#BDEBD2);--pk-display:"Dela Gothic One",var(--pkb-font-fallback,sans-serif);--pk-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",var(--pkb-font-fallback,sans-serif);container-type:inline-size;width:100%}
+.pkb{--pk-sun:var(--pkb-sun,#FFD54F);--pk-ink:var(--pkb-ink,#2A1F14);--pk-paper:var(--pkb-paper,#FFFDF6);--pk-red:var(--pkb-red,#E8473B);--pk-mint:var(--pkb-mint,#BDEBD2);--pk-display:"Dela Gothic One",var(--pkb-font-fallback,sans-serif);--pk-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",var(--pkb-font-fallback,sans-serif);container-type:inline-size;isolation:isolate;width:100%}
 .pkb,.pkb *{box-sizing:border-box;margin:0;padding:0}
 .pkb-board{position:relative;overflow:hidden;max-width:720px;margin:0 auto;padding:22px 26px 20px;border-radius:24px;background-color:var(--pk-sun);background-image:radial-gradient(rgba(42,31,20,.12) 1.3px,transparent 1.6px);background-size:16px 16px;border:2.5px solid var(--pk-ink);color:var(--pk-ink);font-family:var(--pk-body);line-height:1.4;text-align:left}
 .pkb-board.pkb-shake{animation:pkb-shake .45s cubic-bezier(.36,.07,.19,.97)}
