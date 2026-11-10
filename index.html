@@ -45,7 +45,7 @@ h1{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:34px;line-
 .tile input{position:absolute;opacity:0;pointer-events:none}
 .tile:has(input:focus-visible){outline:3px solid var(--ink);outline-offset:3px}
 .emo{font-size:32px;line-height:1;transition:opacity .2s}
-.lbl{font-weight:800;font-size:13px;line-height:1.25;text-align:center;padding:0 6px;transition:opacity .2s}
+.lbl{font-weight:800;font-size:13px;line-height:1.25;text-align:center;padding:0 6px;transition:opacity .2s;word-break:keep-all;overflow-wrap:anywhere}
 .stamp{position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1;border-radius:50%;border:3px solid var(--red);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 4px var(--red);color:var(--red);display:grid;place-items:center;font-family:"Dela Gothic One",sans-serif;font-size:20px;letter-spacing:.04em;opacity:0;transform:translate(-50%,-50%) rotate(-16deg) scale(1.7);transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .15s;pointer-events:none}
 .tile.on .stamp{opacity:.9;transform:translate(-50%,-50%) rotate(-16deg) scale(1)}
 .tile.on .emo,.tile.on .lbl{opacity:.35}
@@ -103,6 +103,7 @@ h1{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:34px;line-
 .close{appearance:none;border:2.5px solid var(--ink);background:var(--sun);border-radius:999px;padding:9px 28px;font:800 14px "M PLUS Rounded 1c",sans-serif;color:var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer}
 .close:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
 .fx{position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+.demo[hidden]{display:none}
 .demo{max-width:720px;margin:12px auto 4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted-foreground,#666)}
 .demo button{appearance:none;border:1px solid var(--border,#ccc);background:var(--secondary,#f3f3f3);color:var(--secondary-foreground,#222);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}
 @media (max-width:560px){.board{padding:18px 14px 16px}.head{flex-direction:column;align-items:stretch;gap:12px}.score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pill,.pill.sc{min-width:0;padding:5px 4px 4px}.pill b{font-size:19px}h1{font-size:26px}.grid{gap:8px}.tile{border-radius:12px;box-shadow:3px 3px 0 var(--ink);gap:3px;aspect-ratio:1/1}.emo{font-size:24px}.lbl{font-size:10.5px;padding:0 2px}.stamp{font-size:14px}.tile.reach::after{font-size:9px;padding:2px 5px;top:-9px;right:-5px}.lines .u{stroke-width:10}.lines .o{stroke-width:5}.banner::before{width:380px;height:380px;margin:-190px 0 0 -190px}.banner span{font-size:12px}.medal{width:96px;height:96px;font-size:20px}.card{padding:20px 14px 16px}.card h2{font-size:24px}.stats b{font-size:17px}.float.pt{font-size:17px}.float.cmb{font-size:13px}}
@@ -130,26 +131,29 @@ h1{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:34px;line-
   <div class="foot"><span id="msg" aria-live="polite"></span><button class="reset" id="reset">リセット</button></div>
   <div class="flash" id="flash"></div>
   <div class="perfect" id="perfect"><div class="card" role="dialog" aria-label="パーフェクト">
-    <div class="medal">準備<br>完了</div><h2>パーフェクト！</h2><p>16こ ぜんぶそろった！忘れ物ゼロで、いってらっしゃい！</p>
+    <div class="medal">準備<br>完了</div><h2>パーフェクト！</h2><p>16こ ぜんぶそろった！<br>忘れ物ゼロで、いってらっしゃい！</p>
     <div class="stats"><div><small>SCORE</small><b id="sScore">0</b></div><div><small>MAX COMBO</small><b id="sCombo">×0</b></div><div><small>BINGO</small><b id="sBingo">0</b></div></div>
     <button class="close" id="close">とじる</button></div></div>
   <canvas class="fx" id="fx"></canvas>
 </div>
-<div class="demo"><span>プレビュー用：</span><button id="dB">▶ ビンゴを見る</button><button id="dP">▶ コンボ → パーフェクト</button><button id="dR">最初に戻す</button></div>
+<div class="demo" id="demo" hidden><span>デモ：</span><button id="dB">▶ ビンゴを見る</button><button id="dP">▶ コンボ → パーフェクト</button><button id="dR">最初に戻す</button></div>
 <script>
 const I=[["📖","旅のしおり"],["🪪","生徒手帳"],["🏥","保険証コピー"],["👛","おこづかい"],["👕","着替え"],["🌙","パジャマ"],["🧥","上着"],["🪥","洗面用具"],["🛁","タオル"],["🤧","ハンカチ・ティッシュ"],["😷","マスク"],["💊","常備薬・酔い止め"],["☂️","折りたたみ傘"],["✏️","筆記用具"],["🛍️","ビニール袋"],["📱","スマホ・充電器"]];
 const L=[[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
-const PRE=[0,1,2,3,5,10];
+// ?demo を付けて開くと、途中まで埋まった状態とデモ用ボタンが出る
+const DEMO=new URLSearchParams(location.search).has("demo");
+const PRE=DEMO?[0,1,2,3,5,10]:[];
 const COL=["#E8473B","#2F6FED","#1FA971","#FFFDF6","#2A1F14","#FF9F1C"];
 const CC=["#FF9F1C","#1FA971","#2F6FED","#9B5DE5","#E8473B"];
 const COMBO_MS=2500;
 const $=id=>document.getElementById(id);
 const board=$("board"),gw=$("gw"),grid=$("grid"),svg=$("lines"),cv=$("fx"),ctx=cv.getContext("2d");
 const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
-grid.innerHTML=I.map(([e,n],i)=>`<label class="tile" style="--gd:${((i>>2)+(i&3))*.12}s"><input type="checkbox"><span class="emo" aria-hidden="true">${e}</span><span class="lbl">${n}</span><span class="stamp" aria-hidden="true">OK</span></label>`).join("");
+const KICK=$("kick").textContent; // HTMLに書いたタグの文字（パーフェクト後に戻す）
+grid.innerHTML=I.map(([e,n],i)=>`<label class="tile" style="--gd:${((i>>2)+(i&3))*.12}s"><input type="checkbox"><span class="emo" aria-hidden="true">${e}</span><span class="lbl">${n.replace(/・/g,"・<wbr>")}</span><span class="stamp" aria-hidden="true">OK</span></label>`).join("");
 const tiles=[...grid.children],ins=tiles.map(t=>t.querySelector("input"));
 let cur=[],prevLines=new Set(),prevReach=new Set(),prevAll=false,lastN=0;
-let score=0,shown=0,combo=0,maxCombo=0,lastT=0;const got=new Set(),gotL=new Set();
+let score=0,shown=0,combo=0,maxCombo=0,lastT=0,gotP=false;const got=new Set(),gotL=new Set();
 
 /* ---------- サウンド（WebAudioで合成、音声ファイルなし） ---------- */
 let AC=null,OUT=null,muted=false;
@@ -234,12 +238,12 @@ function bingo(fresh,pts){const n=fresh.length,seq=[...new Set(fresh.flatMap(k=>
     if(pts)setTimeout(()=>addScore(pts,c.x,c.y+105,"big"),350)},seq.length*step+60)}
 
 /* パーフェクト：全マスが波打つ→はんこ→花火→持ち物の雨→スコア集計 */
-function perfect(linePts){score+=linePts+1000;
+function perfect(linePts){const bonus=gotP?0:1000;gotP=true;score+=linePts+bonus;
   tiles.forEach((t,i)=>hop(i,((i>>2)+(i&3))*60));SFX.perfect();if(!calm)replay($("flash"),"go");
   $("sScore").textContent="0";$("sCombo").textContent="×0";$("sBingo").textContent="0";
   setTimeout(()=>{replay($("perfect"),"show");$("close").focus({preventScroll:true});
     setTimeout(()=>{if(!calm)replay(board,"shake");SFX.boom();burst(0,BH,90,{angle:-Math.PI/3,spread:.8,speed:22,g:.32,star:.3});burst(BW,BH,90,{angle:-Math.PI*2/3,spread:.8,speed:22,g:.32,star:.3});rain(3500);buzz([60,80,60,80,200]);
-      floatText("PERFECT BONUS +1000",BW/2,BH*.16,"big");
+      if(bonus)floatText(`PERFECT BONUS +${bonus}`,BW/2,BH*.16,"big");
       countUp($("sScore"),0,score,1300,v=>v.toLocaleString(),true);countUp($("sCombo"),0,maxCombo,700,v=>"×"+v);countUp($("sBingo"),0,cur.length,700,v=>v);countScore()},720);
     [1300,1650,2000,2350,2700].forEach(t=>setTimeout(()=>firework(BW*(.15+Math.random()*.7),BH*(.12+Math.random()*.3)),t));
     setTimeout(()=>emojiRain(3000),1500)},520)}
@@ -249,7 +253,7 @@ function upd(src=null,quiet=false){const on=ins.map(x=>x.checked),c=on.filter(Bo
   const fresh=cur.filter(k=>!prevLines.has(k)),hit=new Set(cur.flatMap(k=>L[k])),reach=new Set();
   for(const l of L){const m=l.filter(i=>!on[i]);if(m.length===1)reach.add(m[0])}
   tiles.forEach((t,i)=>{t.classList.toggle("on",on[i]);t.classList.toggle("line",hit.has(i));t.classList.toggle("reach",reach.has(i))});
-  board.classList.toggle("all",c===16);$("kick").classList.toggle("gold",c===16);$("kick").textContent=c===16?"🏆 PERFECT":"修学旅行";
+  board.classList.toggle("all",c===16);$("kick").classList.toggle("gold",c===16);$("kick").textContent=c===16?"🏆 PERFECT":KICK;
   $("cnt").textContent=c+"/16";$("bng").textContent=cur.length;
   const bp=$("bp");if(cur.length>lastN){bp.classList.remove("hot");void bp.offsetWidth}bp.classList.toggle("hot",cur.length>0);lastN=cur.length;
   drawLines(fresh);
@@ -269,11 +273,12 @@ $("close").onclick=()=>$("perfect").classList.remove("show");
 $("perfect").addEventListener("click",e=>{if(e.target.id==="perfect")e.target.classList.remove("show")});
 function setAll(f){ins.forEach((x,i)=>x.checked=f(i));$("perfect").classList.remove("show");
   const on=ins.map(x=>x.checked);got.clear();gotL.clear();on.forEach((v,i)=>v&&got.add(i));L.forEach((l,k)=>l.every(i=>on[i])&&gotL.add(k));
-  prevLines=new Set(gotL);prevReach=new Set();score=shown=got.size*10+gotL.size*100;combo=0;maxCombo=0;
+  prevLines=new Set(gotL);prevReach=new Set();score=shown=got.size*10+gotL.size*100;combo=0;maxCombo=0;gotP=on.every(Boolean);
   $("combo").classList.remove("on");$("sc").textContent=score.toLocaleString();upd(null,true)}
 $("reset").onclick=()=>setAll(()=>false);
 
-/* ---------- プレビュー用デモ（本番では削除） ---------- */
+/* ---------- デモ用ボタン（?demo のときだけ表示） ---------- */
+$("demo").hidden=!DEMO;
 let busy=false;const wait=ms=>new Promise(r=>setTimeout(r,ms));
 $("dB").onclick=async()=>{if(busy)return;busy=true;if(ins.every(x=>x.checked))setAll(()=>false);else $("perfect").classList.remove("show");
   const on=ins.map(x=>x.checked),miss=L.map(l=>l.filter(i=>!on[i])).filter(m=>m.length).sort((a,b)=>a.length-b.length)[0];
