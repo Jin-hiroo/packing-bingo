@@ -2,6 +2,7 @@
 
 **A packing checklist for school trips that plays like bingo: stamp each item as it goes in the bag, line them up, and get combos, fanfares and fireworks. Drop it into a React site as one component, or open the single-file HTML page.**
 
+[![npm version](https://img.shields.io/npm/v/packing-bingo?logo=npm)](https://www.npmjs.com/package/packing-bingo)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![React 18 or later](https://img.shields.io/badge/React-%E2%89%A518-61DAFB?logo=react&logoColor=black)](#use-it-in-react)
 [![TypeScript types included](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white)](src/index.ts)
@@ -38,10 +39,10 @@ Packing the night before a school trip is a chore. Packing Bingo turns the check
 
 ## Use it in React
 
-You need React 18 or later. The package isn't on npm yet, so install it from GitHub. npm builds it during the install.
+You need React 18 or later.
 
 ```sh
-npm install github:Jin-hiroo/packing-bingo
+npm install packing-bingo     # or: pnpm add packing-bingo / yarn add packing-bingo
 ```
 
 Render the component wherever the checklist should go:
@@ -170,7 +171,7 @@ npm run typecheck
 
 修学旅行の持ち物チェックリストを、4×4のビンゴにしたものです。持ち物を入れるたびにマスをタップしてスタンプを押し、タテ・ヨコ・ナナメがそろうとビンゴになります。コンボ・スコア・効果音・花火で、前の晩の荷造りを少し楽しくします。
 
-- **Reactのサイトで使う場合：** `npm install github:Jin-hiroo/packing-bingo` でインストールし、`<PackingBingo storageKey="kyoto-trip-2026" />` と書くだけで表示できます。持ち物は `items`、画面の文言は `messages` で変更できます。Next.jsのApp Routerでもそのまま使えます。
+- **Reactのサイトで使う場合：** `npm install packing-bingo` でインストールし、`<PackingBingo storageKey="kyoto-trip-2026" />` と書くだけで表示できます。持ち物は `items`、画面の文言は `messages` で変更できます。Next.jsのApp Routerでもそのまま使えます。
 - **単体のページで使う場合：** `index.html` を開くだけで動き、進み具合はブラウザに保存されます。`?demo` を付けると、途中まで埋まった状態とデモ用のボタンが出ます。
 
 ## License
