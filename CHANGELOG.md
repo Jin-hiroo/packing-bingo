@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Docs
+
+- A demo site on GitHub Pages (https://jin-hiroo.github.io/packing-bingo/), built from `site/` by a workflow on every push to `main`. Its embed code is taken from the README's quick start.
+- Runnable example projects in `examples/`: Next.js (App Router), Vite + React, and plain HTML.
+- The package's `homepage` points to the demo site.
+
 ## 0.2.0
 
 ### Changed
