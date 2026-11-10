@@ -117,6 +117,8 @@ export default function PackingPage() {
 }
 ```
 
+`@/` は、`create-next-app` で作ったプロジェクトに最初から設定されている、プロジェクトの一番上を指す書き方です。部品のファイルは `components/OkinawaPackingBingo.tsx` に置いてください。`src/` フォルダを使うプロジェクトでは `src/components/OkinawaPackingBingo.tsx` です。`@/` が使えないプロジェクトでは、`../../components/OkinawaPackingBingo` のような相対パスに書き換えてください。
+
 カードは置いた場所の幅いっぱい（最大720 px）に広がり、狭い場所ではスマホ向けの配置に自動で切り替わります。持ち物を変えたいときは `items` の中身を書き換えるだけです。`items` を省くと、一般的な修学旅行の持ち物リストになります。
 
 Next.jsのServer Componentのページからでも、そのまま使えます。ただし、`onBingo` などの関数（コールバック）はServer Componentから渡せず、「Event handlers cannot be passed to Client Component props」というエラーでビルドが止まります。コールバックを使うときは、部品のファイルの1行目に `"use client";` を書いてください。
@@ -290,7 +292,7 @@ function PackingPage() {
 | `onPerfect` | `(event: PerfectEvent) => void` | なし | タップでカード全体がそろった |
 | `sound` | `boolean` | `true` | 音の最初の設定。ユーザーが🔊ボタンで選ぶまで使われます |
 | `fonts` | `boolean` | `true` | Dela Gothic OneとM PLUS Rounded 1cをGoogle Fontsから読み込む |
-| `demo` | `boolean` | `false` | 6マス埋まった状態から始め、デモ用のボタンを出します。`storageKey` を指定しない限り保存しません |
+| `demo` | `boolean` | `false` | デモ用のボタンを出します。保存された進み具合も `defaultChecked` もなければ、6マス埋まった状態から始めます。`storageKey` を指定しない限り保存しません |
 | `className`・`style` | | なし | 外側の `<div>` に付きます |
 | `ref` | `Ref<PackingBingoHandle>` | なし | [ref](#ref) を見てください |
 
