@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>持ちものビンゴ</title>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--sun:#FFD54F;--ink:#2A1F14;--paper:#FFFDF6;--red:#E8473B;--mint:#BDEBD2}
+*{box-sizing:border-box;margin:0;padding:0}
+.board{position:relative;overflow:hidden;max-width:720px;margin:4px auto 0;padding:24px 26px 20px;border-radius:24px;background-color:var(--sun);background-image:radial-gradient(rgba(42,31,20,.12) 1.3px,transparent 1.6px);background-size:16px 16px;border:2.5px solid var(--ink);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif}
+.board.shake{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translate(-1px,1px)}20%,80%{transform:translate(3px,-2px)}30%,50%,70%{transform:translate(-6px,2px)}40%,60%{transform:translate(6px,-1px)}}
+.head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.kicker{display:inline-block;background:var(--ink);color:var(--sun);font-weight:800;font-size:11px;letter-spacing:.14em;padding:4px 10px;border-radius:999px}
+h1{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:34px;line-height:1.15;margin-top:8px;letter-spacing:.02em}
+.sub{font-weight:800;font-size:13px;margin-top:4px}
+.score{display:flex;gap:10px;flex:none}
+.pill{min-width:78px;background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;padding:6px 10px 5px;text-align:center;box-shadow:3px 3px 0 var(--ink)}
+.pill small{display:block;font-size:10px;font-weight:800;letter-spacing:.12em}
+.pill b{display:block;font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:24px;line-height:1.15}
+.pill.hot{background:var(--red);color:#fff;animation:wob .5s ease}
+@keyframes wob{40%{transform:scale(1.15) rotate(-4deg)}}
+.gw{position:relative}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tile{position:relative;aspect-ratio:1/.82;background:var(--paper);border:2.5px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s,background-color .25s}
+.tile:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.tile input{position:absolute;opacity:0;pointer-events:none}
+.tile:has(input:focus-visible){outline:3px solid var(--ink);outline-offset:3px}
+.emo{font-size:32px;line-height:1;transition:opacity .2s}
+.lbl{font-weight:800;font-size:13px;line-height:1.25;text-align:center;padding:0 6px;transition:opacity .2s}
+.stamp{position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1;border-radius:50%;border:3px solid var(--red);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 4px var(--red);color:var(--red);display:grid;place-items:center;font-family:"Dela Gothic One",sans-serif;font-size:20px;letter-spacing:.04em;opacity:0;transform:translate(-50%,-50%) rotate(-16deg) scale(1.7);transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .15s;pointer-events:none}
+.tile.on .stamp{opacity:.9;transform:translate(-50%,-50%) rotate(-16deg) scale(1)}
+.tile.on .emo,.tile.on .lbl{opacity:.35}
+.tile.line{background-color:var(--mint)}
+.tile.reach{border-style:dashed}
+.tile.reach::after{content:"リーチ";position:absolute;top:-11px;right:-8px;z-index:3;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;border:2px solid var(--ink);transform:rotate(6deg);animation:bob 1.1s ease-in-out infinite}
+@keyframes bob{50%{transform:rotate(6deg) translateY(-4px)}}
+.tile.hop{animation:hop .55s cubic-bezier(.3,1.6,.5,1) var(--d,0ms) both}
+@keyframes hop{35%{transform:translateY(-14px) scale(1.07)}}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2;transition:opacity .4s}
+.board.all .lines{opacity:0}
+.lines line{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+.lines .u{stroke:var(--paper);stroke-width:13}
+.lines .o{stroke:var(--ink);stroke-width:6}
+.lines .draw line{animation:draw .45s ease-out .3s both}
+@keyframes draw{from{stroke-dashoffset:1}}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;font-weight:800;font-size:13px}
+.reset{appearance:none;flex:none;border:2px solid var(--ink);background:transparent;border-radius:999px;padding:5px 12px;font:800 12px "M PLUS Rounded 1c",sans-serif;color:var(--ink);cursor:pointer}
+.banner{position:absolute;left:50%;top:50%;z-index:9;pointer-events:none;text-align:center;opacity:0;transform:translate(-50%,-50%)}
+.banner::before{content:"";position:absolute;left:50%;top:50%;width:560px;height:560px;margin:-280px 0 0 -280px;z-index:-1;border-radius:50%;background:repeating-conic-gradient(rgba(255,253,246,.8) 0 9deg,transparent 9deg 18deg);-webkit-mask:radial-gradient(circle,#000 15%,transparent 62%);mask:radial-gradient(circle,#000 15%,transparent 62%);animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.banner b{display:block;white-space:nowrap;font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:clamp(40px,11vw,82px);line-height:1;color:var(--red);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--ink)}
+.banner span{display:inline-block;margin-top:12px;background:var(--ink);color:var(--sun);font-weight:800;font-size:15px;padding:6px 16px;border-radius:999px}
+.banner.show{animation:ban 1.8s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}16%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(-5deg)}26%{transform:translate(-50%,-50%) scale(1) rotate(-5deg)}80%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-5deg)}100%{opacity:0;transform:translate(-50%,-62%) scale(.96) rotate(-5deg)}}
+.perfect{position:absolute;inset:0;z-index:8;display:grid;place-items:center;padding:20px;background:rgba(42,31,20,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.perfect.show{opacity:1;visibility:visible}
+.card{width:min(400px,100%);background:var(--paper);border:2.5px solid var(--ink);border-radius:22px;box-shadow:6px 6px 0 var(--ink);padding:28px 24px 22px;text-align:center;transform:scale(.6) translateY(30px);transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
+.perfect.show .card{transform:none}
+.medal{width:132px;height:132px;margin:0 auto 14px;border-radius:50%;border:5px solid var(--red);box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 7px var(--red);color:var(--red);display:grid;place-content:center;font-family:"Dela Gothic One",sans-serif;font-size:27px;line-height:1.15;opacity:0;transform:rotate(-14deg) scale(2.6)}
+.perfect.show .medal{animation:slam .38s cubic-bezier(.5,0,.75,0) .35s forwards}
+@keyframes slam{to{opacity:1;transform:rotate(-14deg) scale(1)}}
+.card h2{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:30px}
+.card p{font-weight:800;font-size:14px;line-height:1.7;margin:8px 0 18px}
+.close{appearance:none;border:2.5px solid var(--ink);background:var(--sun);border-radius:999px;padding:9px 28px;font:800 14px "M PLUS Rounded 1c",sans-serif;color:var(--ink);box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.close:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.fx{position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+.demo{max-width:720px;margin:12px auto 4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted-foreground,#666)}
+.demo button{appearance:none;border:1px solid var(--border,#ccc);background:var(--secondary,#f3f3f3);color:var(--secondary-foreground,#222);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}
+@media (max-width:560px){.board{padding:18px 14px 16px}.head{flex-direction:column;align-items:flex-start}h1{font-size:26px}.grid{gap:8px}.tile{border-radius:12px;box-shadow:3px 3px 0 var(--ink);gap:3px;aspect-ratio:1/1}.emo{font-size:24px}.lbl{font-size:10.5px;padding:0 2px}.stamp{font-size:14px}.tile.reach::after{font-size:9px;padding:2px 5px;top:-9px;right:-5px}.lines .u{stroke-width:10}.lines .o{stroke-width:5}.banner::before{width:380px;height:380px;margin:-190px 0 0 -190px}.banner span{font-size:12px}.medal{width:104px;height:104px;font-size:21px}.card h2{font-size:24px}}
+@media (prefers-reduced-motion:reduce){.board.shake,.tile.hop,.pill.hot,.tile.reach::after,.banner::before,.lines .draw line{animation:none}.banner.show{animation:fade 1.8s forwards}.perfect.show .medal{animation:none;opacity:1;transform:rotate(-14deg)}.card{transition:none}}
+@keyframes fade{0%,100%{opacity:0}15%,80%{opacity:1}}
+</style>
+</head>
+<body>
+<div class="board" id="board">
+  <div class="head">
+    <div><span class="kicker">修学旅行</span><h1>持ちものビンゴ</h1><p class="sub">そろえた物をタップしてスタンプ。タテ・ヨコ・ナナメでビンゴ！</p></div>
+    <div class="score"><div class="pill"><small>そろった</small><b id="cnt"></b></div><div class="pill" id="bp"><small>BINGO</small><b id="bng"></b></div></div>
+  </div>
+  <div class="gw" id="gw">
+    <div class="grid" id="grid"></div>
+    <svg class="lines" id="lines" aria-hidden="true"></svg>
+    <div class="banner" id="banner" aria-hidden="true"><b id="bT">BINGO!</b><span id="bS"></span></div>
+  </div>
+  <div class="foot"><span id="msg" aria-live="polite"></span><button class="reset" id="reset">リセット</button></div>
+  <div class="perfect" id="perfect"><div class="card" role="dialog" aria-label="パーフェクト"><div class="medal">準備<br>完了</div><h2>パーフェクト！</h2><p>16こ ぜんぶそろいました。<br>忘れ物ゼロで、いってらっしゃい！</p><button class="close" id="close">とじる</button></div></div>
+  <canvas class="fx" id="fx"></canvas>
+</div>
+<div class="demo"><span>プレビュー用：</span><button id="dB">▶ ビンゴを見る</button><button id="dP">▶ パーフェクトを見る</button><button id="dR">最初に戻す</button></div>
+<script>
+const I=[["📖","旅のしおり"],["🪪","生徒手帳"],["🏥","保険証コピー"],["👛","おこづかい"],["👕","着替え"],["🌙","パジャマ"],["🧥","上着"],["🪥","洗面用具"],["🛁","タオル"],["🤧","ハンカチ・ティッシュ"],["😷","マスク"],["💊","常備薬・酔い止め"],["☂️","折りたたみ傘"],["✏️","筆記用具"],["🛍️","ビニール袋"],["📱","スマホ・充電器"]];
+const L=[[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
+const PRE=[0,1,2,3,5,10];
+const COL=["#E8473B","#2F6FED","#1FA971","#FFFDF6","#2A1F14","#FF9F1C"];
+const $=id=>document.getElementById(id);
+const board=$("board"),gw=$("gw"),grid=$("grid"),svg=$("lines"),cv=$("fx"),ctx=cv.getContext("2d");
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+grid.innerHTML=I.map(([e,n],i)=>`<label class="tile"><input type="checkbox"${PRE.includes(i)?" checked":""}><span class="emo" aria-hidden="true">${e}</span><span class="lbl">${n}</span><span class="stamp" aria-hidden="true">OK</span></label>`).join("");
+const tiles=[...grid.children],ins=tiles.map(t=>t.querySelector("input"));
+let cur=[],prevLines=new Set(),prevAll=false,lastN=0;
+
+/* 紙吹雪 */
+let P=[],raf=0,dpr=1,BW=0,BH=0;
+function fit(){const r=board.getBoundingClientRect();dpr=Math.min(2,devicePixelRatio||1);BW=r.width;BH=r.height;cv.width=Math.round(BW*dpr);cv.height=Math.round(BH*dpr)}
+function piece(x,y,vx,vy,g,s,life){return{x,y,vx,vy,g,w:(5+Math.random()*6)*s,h:(3+Math.random()*5)*s,r:Math.random()*6,vr:(Math.random()-.5)*.35,c:COL[Math.random()*COL.length|0],life,round:Math.random()<.25}}
+function go(){if(!raf)raf=requestAnimationFrame(tick)}
+function burst(x,y,n,o={}){if(calm)return;for(let i=0;i<n;i++){const a=(o.angle??-Math.PI/2)+(Math.random()-.5)*(o.spread??Math.PI*2),v=(o.speed??10)*(.35+Math.random()*.85);P.push(piece(x,y,Math.cos(a)*v,Math.sin(a)*v,o.g??.28,o.size??1,(o.life??110)+Math.random()*40))}go()}
+function rain(ms){if(calm)return;const end=performance.now()+ms;(function drop(){for(let i=0;i<4;i++)P.push(piece(Math.random()*BW,-12,(Math.random()-.5)*2,2+Math.random()*3,.045,1,420));go();if(performance.now()<end)setTimeout(drop,45)})()}
+function tick(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,BW,BH);P=P.filter(p=>p.life>0&&p.y<BH+30);
+  for(const p of P){p.vx*=.985;p.vy=p.vy*.985+p.g;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life--;
+    ctx.save();ctx.globalAlpha=Math.min(1,p.life/25);ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;
+    if(p.round){ctx.beginPath();ctx.arc(0,0,p.h/1.6,0,7);ctx.fill()}else{ctx.scale(1,Math.cos(p.r*2.3));ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h)}ctx.restore()}
+  raf=P.length?requestAnimationFrame(tick):0}
+
+/* 演出 */
+function rel(el){const b=board.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-b.left+r.width/2,y:r.top-b.top+r.height/2}}
+function replay(el,cls){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
+function hop(i,d){if(calm)return;tiles[i].style.setProperty("--d",d+"ms");replay(tiles[i],"hop")}
+grid.addEventListener("animationend",e=>{if(e.animationName==="hop")e.target.classList.remove("hop")});
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+function ctr(i){const t=tiles[i];return{x:t.offsetLeft+t.offsetWidth/2,y:t.offsetTop+t.offsetHeight/2}}
+function drawLines(fresh=[]){svg.setAttribute("viewBox",`0 0 ${gw.clientWidth} ${gw.clientHeight}`);
+  svg.innerHTML=cur.map(k=>{const a=ctr(L[k][0]),b=ctr(L[k][3]),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),ex=dx/d*26,ey=dy/d*26,at=`x1="${a.x-ex}" y1="${a.y-ey}" x2="${b.x+ex}" y2="${b.y+ey}" pathLength="1"`;
+    return `<g${fresh.includes(k)?' class="draw"':""}><line class="u" ${at}/><line class="o" ${at}/></g>`}).join("")}
+function bingo(fresh){fresh.forEach(k=>L[k].forEach((i,j)=>hop(i,j*80)));const n=fresh.length;
+  $("bT").textContent=n>=3?"トリプルビンゴ!":n===2?"ダブルビンゴ!":"BINGO!";
+  $("bS").textContent=n>1?`一気に ${n} ライン！`:`${cur.length} ライン目！`;replay($("banner"),"show");
+  const c=rel(gw);setTimeout(()=>burst(c.x,c.y,n>1?160:100,{speed:n>1?15:12}),150);buzz(n>1?[40,60,40,60,90]:[40,60,40])}
+function perfect(){tiles.forEach((t,i)=>hop(i,((i>>2)+(i&3))*60));
+  setTimeout(()=>{replay($("perfect"),"show");$("close").focus({preventScroll:true});
+    setTimeout(()=>{if(!calm)replay(board,"shake");burst(0,BH,90,{angle:-Math.PI/3,spread:.8,speed:22,g:.32});burst(BW,BH,90,{angle:-Math.PI*2/3,spread:.8,speed:22,g:.32});rain(3500);buzz([60,80,60,80,200])},720)},520)}
+
+function upd(src=null,quiet=false){const on=ins.map(x=>x.checked),c=on.filter(Boolean).length;
+  cur=L.flatMap((l,k)=>l.every(i=>on[i])?[k]:[]);
+  const fresh=cur.filter(k=>!prevLines.has(k)),hit=new Set(cur.flatMap(k=>L[k])),reach=new Set();
+  for(const l of L){const m=l.filter(i=>!on[i]);if(m.length===1)reach.add(m[0])}
+  tiles.forEach((t,i)=>{t.classList.toggle("on",on[i]);t.classList.toggle("line",hit.has(i));t.classList.toggle("reach",reach.has(i))});
+  board.classList.toggle("all",c===16);
+  $("cnt").textContent=c+"/16";$("bng").textContent=cur.length;
+  const bp=$("bp");if(cur.length>lastN){bp.classList.remove("hot");void bp.offsetWidth}bp.classList.toggle("hot",cur.length>0);lastN=cur.length;
+  drawLines(fresh);
+  if(src!==null&&on[src]){const p=rel(tiles[src]);burst(p.x,p.y,16,{speed:6,g:.2,life:30,size:.6})}
+  if(!quiet){if(c===16&&!prevAll)perfect();else if(fresh.length)bingo(fresh)}
+  prevLines=new Set(cur);prevAll=c===16;
+  const rn=[...reach].map(i=>`「${I[i][1]}」`);
+  $("msg").textContent=c===16?"🎉 パーフェクト！忘れ物ゼロで出発できます":rn.length?`リーチ！ あと${rn.slice(0,2).join("か")}${rn.length>2?"など":""}でビンゴ`:cur.length?`ビンゴ ${cur.length} ライン！ のこり ${16-c} こ`:`のこり ${16-c} こ。まずは1ラインそろえよう`}
+
+grid.addEventListener("change",e=>upd(ins.indexOf(e.target)));
+$("close").onclick=()=>$("perfect").classList.remove("show");
+$("perfect").addEventListener("click",e=>{if(e.target.id==="perfect")e.target.classList.remove("show")});
+function setAll(f){ins.forEach((x,i)=>x.checked=f(i));$("perfect").classList.remove("show");upd(null,true)}
+$("reset").onclick=()=>setAll(()=>false);
+
+/* プレビュー用デモ */
+let busy=false;const wait=ms=>new Promise(r=>setTimeout(r,ms));
+$("dB").onclick=async()=>{if(busy)return;busy=true;if(ins.every(x=>x.checked))setAll(()=>false);else $("perfect").classList.remove("show");
+  const on=ins.map(x=>x.checked),miss=L.map(l=>l.filter(i=>!on[i])).filter(m=>m.length).sort((a,b)=>a.length-b.length)[0];
+  for(const i of miss){await wait(300);ins[i].checked=true;upd(i)}busy=false};
+$("dP").onclick=async()=>{if(busy)return;busy=true;if(ins.every(x=>x.checked))setAll(()=>false);else $("perfect").classList.remove("show");
+  const miss=tiles.map((_,i)=>i).filter(i=>!ins[i].checked),last=miss.pop();
+  for(const i of miss){await wait(70);ins[i].checked=true;upd(i,true)}
+  await wait(450);ins[last].checked=true;upd(last);busy=false};
+$("dR").onclick=()=>{if(!busy)setAll(i=>PRE.includes(i))};
+
+fit();upd(null,true);
+const ro=new ResizeObserver(()=>{fit();drawLines()});ro.observe(board);ro.observe(gw);
+</script>
+</body>
+</html>
