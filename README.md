@@ -2,13 +2,14 @@
 
 **修学旅行の持ち物チェックリストを、4×4のビンゴにするReactコンポーネントです。持ち物をかばんに入れるたびにマスをタップしてスタンプを押し、タテ・ヨコ・ナナメがそろうと、コンボ・ファンファーレ・花火で盛り上がります。進み具合は各自のブラウザに自動で保存されます。**
 
+[![Demo on GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-222222?logo=githubpages&logoColor=white)](https://jin-hiroo.github.io/packing-bingo/)
 [![npm version](https://img.shields.io/npm/v/packing-bingo?logo=npm)](https://www.npmjs.com/package/packing-bingo)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![React 18 or later](https://img.shields.io/badge/React-%E2%89%A518-61DAFB?logo=react&logoColor=black)](#概要)
 [![TypeScript types included](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white)](#api)
 [![Standalone single HTML file](https://img.shields.io/badge/standalone-single%20HTML%20file-E34F26?logo=html5&logoColor=white)](#単体のページ)
 
-[クイックスタート](#クイックスタート) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
+[デモサイト](https://jin-hiroo.github.io/packing-bingo/) · [クイックスタート](#クイックスタート) · [デモコード](#デモ) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
 
 <p align="center">
   <a href="docs/images/bingo-desktop.png"><img src="docs/images/bingo-desktop.png" alt="持ち物が並んだ4×4のビンゴカード。ナナメの列がそろった瞬間で、大きなBINGO!の文字、+100の得点、紙吹雪が出ている。上の欄には8/16、2ライン、2コンボと表示されている。" width="560"></a>
@@ -146,6 +147,18 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
   });
 </script>
 ```
+
+## デモ
+
+- **デモサイト：** https://jin-hiroo.github.io/packing-bingo/
+  その場でタップして試せます。演出だけを自動で再生するカードと、組み込み用のコード（このREADMEのクイックスタートと同じもの）も載っています。
+- **デモコード：** [`examples/`](examples/) に、そのまま動かせるプロジェクトがあります。フォルダごとコピーして、自分のサイトの土台にもできます。
+
+| フォルダ | 内容 | 動かし方 |
+| --- | --- | --- |
+| [`examples/nextjs`](examples/nextjs) | Next.js（App Router）。クイックスタートそのままのページと、ビンゴの瞬間を受け取るページ | `npm install` → `npm run dev` |
+| [`examples/vite-react`](examples/vite-react) | Vite + React。ふつうのReactアプリのページに置く例 | `npm install` → `npm run dev` |
+| [`examples/html`](examples/html) | HTMLだけ。Reactもインストールも使わない例 | `index.html` をブラウザで開く |
 
 ## 使い方の例
 
@@ -427,7 +440,7 @@ cd packing-bingo
 open index.html        # macOSの場合。ほかのOSでは、ファイルをブラウザで開いてください
 ```
 
-URLの末尾に `?demo` を付けると、途中まで埋まった状態から始まり、デモ用のボタンが出ます。「▶ ビンゴを見る」でビンゴを、「▶ コンボ → パーフェクト」でコンボからパーフェクトまでを再生します。GitHub Pagesで公開するときは、**Settings → Pages → Deploy from a branch → `main` / root** を選びます。
+URLの末尾に `?demo` を付けると、途中まで埋まった状態から始まり、デモ用のボタンが出ます。「▶ ビンゴを見る」でビンゴを、「▶ コンボ → パーフェクト」でコンボからパーフェクトまでを再生します。デモサイトの [standalone.html](https://jin-hiroo.github.io/packing-bingo/standalone.html) でも同じページを公開しています。
 
 ページの中身を変えるときは、最後の `<script>` にある `PackingBingo.createPackingBingo(…)` のオプションを書き換えます。どのビルドでも使われる既定値を変えるときは、`src/items.ts` か `src/messages.ts` を編集して `npm run build` を実行します。
 
@@ -440,6 +453,8 @@ npm run typecheck
 ```
 
 `index.html` は `scripts/build-standalone.mjs` が `src/` から作るので、直接編集しないでください。
+
+デモサイトは `site/index.html` です。`node scripts/build-site.mjs` を実行すると、`_site/` にデモサイトができます。そのとき、組み込み用のコードはこのREADMEのクイックスタートから差し込まれるので、READMEとデモサイトのコードはいつも同じになります。`main` に変更が入ると、GitHub Actions（`.github/workflows/pages.yml`）がビルドしてGitHub Pagesに公開し直します。
 
 ## English
 
@@ -455,7 +470,7 @@ import { PackingBingo, en } from "packing-bingo";
 <PackingBingo messages={en} />;
 ```
 
-The default UI text is Japanese; `en` is a complete English set. Pass exactly 16 `items` (`{ emoji, label }`) to use your own list. The sections above cover the props, events and integration notes; the code snippets and type names can be read as they are.
+Try it on the [demo site](https://jin-hiroo.github.io/packing-bingo/); runnable example projects (Next.js, Vite + React, plain HTML) are in [`examples/`](examples/). The default UI text is Japanese; `en` is a complete English set. Pass exactly 16 `items` (`{ emoji, label }`) to use your own list. The sections above cover the props, events and integration notes; the code snippets and type names can be read as they are.
 
 ## ライセンス
 

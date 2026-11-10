@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>沖縄修学旅行のしおり（持ちものビンゴのHTMLの例）</title>
+  <style>
+    body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; line-height: 1.7; background: #fff; color: #222; }
+    main { max-width: 760px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>沖縄修学旅行のしおり</h1>
+    <p>持ち物をかばんに入れたら、マスをタップしてください。進み具合はこのブラウザに保存されます。</p>
+
+    <!-- ここから下を、HTMLの好きな場所に貼り付けます -->
+    <div id="packing-bingo"></div>
+    <script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.2/dist/packing-bingo.global.js"></script>
+    <script>
+      PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
+        tag: "沖縄修学旅行",
+        items: [
+          { emoji: "📖", label: "旅のしおり" }, { emoji: "🪪", label: "生徒手帳" },
+          { emoji: "🏥", label: "保険証コピー" }, { emoji: "👛", label: "おこづかい" },
+          { emoji: "👕", label: "着替え" }, { emoji: "🩱", label: "水着" },
+          { emoji: "🧴", label: "日焼け止め" }, { emoji: "🧢", label: "帽子" },
+          { emoji: "🕶️", label: "サングラス" }, { emoji: "🩴", label: "ビーチサンダル" },
+          { emoji: "🪥", label: "洗面用具" }, { emoji: "🛁", label: "タオル" },
+          { emoji: "💊", label: "常備薬・酔い止め" }, { emoji: "☂️", label: "折りたたみ傘" },
+          { emoji: "🛍️", label: "ビニール袋" }, { emoji: "📱", label: "スマホ・充電器" },
+        ],
+      });
+    </script>
+    <!-- ここまで -->
+  </main>
+</body>
+</html>
