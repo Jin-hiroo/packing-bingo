@@ -1,104 +1,180 @@
-# Packing Bingo (持ちものビンゴ)
+# 持ちものビンゴ（Packing Bingo）
 
-**A React component that turns a school-trip packing checklist into a 4×4 bingo card: students stamp each item as it goes in the bag, complete lines, and get combos, fanfares and fireworks. One component, no runtime dependencies, safe to render on the server.**
+**修学旅行の持ち物チェックリストを、4×4のビンゴにするReactコンポーネントです。持ち物をかばんに入れるたびにマスをタップしてスタンプを押し、タテ・ヨコ・ナナメがそろうと、コンボ・ファンファーレ・花火で盛り上がります。進み具合は各自のブラウザに自動で保存されます。**
 
 [![npm version](https://img.shields.io/npm/v/packing-bingo?logo=npm)](https://www.npmjs.com/package/packing-bingo)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![React 18 or later](https://img.shields.io/badge/React-%E2%89%A518-61DAFB?logo=react&logoColor=black)](#at-a-glance)
+[![React 18 or later](https://img.shields.io/badge/React-%E2%89%A518-61DAFB?logo=react&logoColor=black)](#概要)
 [![TypeScript types included](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white)](#api)
-[![Standalone single HTML file](https://img.shields.io/badge/standalone-single%20HTML%20file-E34F26?logo=html5&logoColor=white)](#standalone-page)
+[![Standalone single HTML file](https://img.shields.io/badge/standalone-single%20HTML%20file-E34F26?logo=html5&logoColor=white)](#単体のページ)
 
-[Quick start](#quick-start) · [Recipes](#recipes) · [API](#api) · [Integration notes](#integration-notes) · [Without React](#without-react) · [日本語](#日本語) · [Changelog](CHANGELOG.md)
+[クイックスタート](#クイックスタート) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
 
 <p align="center">
-  <a href="docs/images/bingo-desktop.png"><img src="docs/images/bingo-desktop.png" alt="A 4×4 bingo card of packing items. A diagonal line has just been completed: a large BINGO! banner, a +100 score popup and confetti are on screen, and the score panel shows 8/16 items, 2 lines and a 2-tap combo." width="560"></a>
+  <a href="docs/images/bingo-desktop.png"><img src="docs/images/bingo-desktop.png" alt="持ち物が並んだ4×4のビンゴカード。ナナメの列がそろった瞬間で、大きなBINGO!の文字、+100の得点、紙吹雪が出ている。上の欄には8/16、2ライン、2コンボと表示されている。" width="560"></a>
 </p>
 
-_The second line completes on a two-tap combo: the line is drawn, the BINGO! banner and +100 pop up, and confetti bursts. The default UI is Japanese: 持ちものビンゴ = "Packing Bingo", そろった = "packed", 2ライン目 = "2nd line". An English text set is included._
+_2コンボで2列目がそろったところ。列に線が引かれ、BINGO!と+100が出て、紙吹雪が舞います。_
 
 <p>
-  <a href="docs/images/phone-reach.png"><img src="docs/images/phone-reach.png" alt="Phone layout with one line completed and a dashed, pulsing square labeled リーチ (reach) on the last missing item." height="320"></a>
-  <a href="docs/images/phone-combo.png"><img src="docs/images/phone-combo.png" alt="Phone layout during a three-tap combo: +20 and +30 popups, 2 COMBO! and 3 COMBO! labels, a draining combo gauge and two リーチ callouts." height="320"></a>
-  <a href="docs/images/phone-perfect.png"><img src="docs/images/phone-perfect.png" alt="Phone layout after all 16 items are stamped: a 準備完了 (ready) stamp, the Perfect! card with score 3,410, max combo ×10 and 10 lines, with confetti and falling item emoji." height="320"></a>
+  <a href="docs/images/phone-reach.png"><img src="docs/images/phone-reach.png" alt="スマホの画面。1列そろっていて、次の列を完成させる最後のマスが点線で囲まれ、リーチの札が付いて点滅している。" height="320"></a>
+  <a href="docs/images/phone-combo.png"><img src="docs/images/phone-combo.png" alt="スマホの画面。3回続けてタップしたところで、+20と+30、2 COMBO!と3 COMBO!の表示、減っていくコンボのゲージ、2つのリーチが見える。" height="320"></a>
+  <a href="docs/images/phone-perfect.png"><img src="docs/images/phone-perfect.png" alt="スマホの画面。16個すべてにスタンプを押したあと。準備完了のスタンプと、得点3,410、最大コンボ×10、10ラインのパーフェクト画面に、紙吹雪と持ち物の絵文字が降っている。" height="320"></a>
 </p>
 
-_On a phone, left to right: one line done and a リーチ ("reach") badge on the square that would finish the next one; a three-tap combo; the Perfect! screen with the final score, fireworks and falling item emoji._
+_スマホでの表示。左から、1列そろって次の列にリーチがかかったところ、3回続けたコンボ、全部そろったときのパーフェクト画面です。_
 
-## What it does
+## できること
 
-Packing the night before a school trip is a chore. Packing Bingo puts the 16 items on a bingo card, so every packed item is a stamp, and every few items there's something to celebrate.
+修学旅行の前の晩の荷造りは面倒です。持ちものビンゴは16個の持ち物をビンゴカードに並べるので、持ち物を1つ入れるたびにスタンプが押せて、何個かごとにお祝いがあります。
 
-- **Every tap gets feedback.** A stamp, a ripple, sparks and a rising note. Taps less than 2.5 s apart chain into a combo.
-- **There's always a next goal.** A square that would complete a line pulses with a リーチ ("reach") badge, and the status line names the item.
-- **Lines and the full card are celebrated.** Any row, column or diagonal (10 lines in all) is a bingo, with a banner and confetti. Stamping all 16 plays a finale with fireworks and a score card.
-- **Points reward finishing,** not tapping on and off. See [Scoring](#scoring).
-- **It's considerate by default.** Squares are real checkboxes, so the keyboard works. `prefers-reduced-motion` is respected. The sound is synthesized (no audio files) and can be muted.
+- **タップするたびに反応があります。** スタンプ、波紋、火花、少しずつ高くなる音。2.5秒以内に続けてタップすると、コンボになります。
+- **次の目標がいつも見えます。** あと1つで列がそろうマスは、リーチの札を付けて点滅し、下の1行にその持ち物の名前が出ます。
+- **列がそろうたびにお祝いします。** タテ・ヨコ・ナナメの10列のどれかがそろうと、BINGO!の文字と紙吹雪が出ます。16個すべてそろうと、花火とスコアカードのフィナーレになります。
+- **得点は、そろえることへのごほうびです。** 付けたり外したりしても増えません。[得点のルール](#得点のルール)を見てください。
+- **進み具合は自動で保存されます。** 各自のブラウザ（localStorage）に保存されるので、ページを閉じても続きから始められます。サーバーには何も送りません。
+- **だれでも使えるように配慮しています。** マスは本物のチェックボックスなので、キーボードで操作できます。`prefers-reduced-motion`（動きを減らす設定）に従います。音は合成した音（音声ファイルなし）で、消すこともできます。
 
-## At a glance
+## 概要
 
-| Area | Details |
+| 項目 | 内容 |
 | --- | --- |
-| Install | `npm install packing-bingo`: ESM and CommonJS, TypeScript types included |
-| Requires | React 18 or later and `react-dom`. No other dependencies, no CSS import, no provider |
-| Size | About 13 kB minified and gzipped, CSS included (React not counted) |
-| Server rendering | Ships with `"use client"`. On the server it renders an empty `<div>`, and the card is built after mount |
-| Styling | Injects one `<style>` into `<head>`. Every class is prefixed `pkb-`. Themable with CSS variables, and it sizes itself to its container |
-| Network | Loads two fonts from Google Fonts, unless you pass `fonts={false}` |
-| Storage | localStorage, only for `storageKey` progress and the mute setting |
-| Browsers | Chrome and Edge 105+, Safari 16+, Firefox 121+. Only tested in Chromium so far ([details](#browser-support-and-testing)) |
+| インストール | `npm install packing-bingo`。ESMとCommonJSの両方、TypeScriptの型付き |
+| 必要なもの | React 18以上と `react-dom`。ほかに依存するパッケージはありません。CSSの読み込みもProviderも不要です |
+| サイズ | 約13 kB（minify・gzip後、CSS込み、Reactは含まず） |
+| サーバー側での表示 | `"use client"` 付きで配布しています。サーバー側では空の `<div>` を出し、ブラウザでカードを作ります |
+| 見た目 | `<head>` に `<style>` を1つ追加します。クラス名はすべて `pkb-` で始まります。CSS変数で配色を変えられ、置いた場所の幅に合わせて自動で大きさが変わります |
+| 通信 | Google Fontsからフォントを2つ読み込みます（`fonts={false}` で止められます） |
+| 保存 | localStorageだけ。進み具合と、音のオン・オフの設定 |
+| ブラウザ | Chrome・Edge 105以上、Safari 16以上、Firefox 121以上。今のところChromiumでしか試していません（[詳しく](#対応ブラウザと確認済みの範囲)） |
 
-## Quick start
+## クイックスタート
+
+コピーして貼り付けるだけで、サイトの好きな場所に置けます。進み具合は各自のブラウザに自動で保存されるので、保存の設定も要りません。
+
+### 1. インストールする
 
 ```sh
-npm install packing-bingo        # or: pnpm add packing-bingo / yarn add packing-bingo
+npm install packing-bingo
 ```
 
+pnpmなら `pnpm add packing-bingo`、yarnなら `yarn add packing-bingo` です。
+
+### 2. 部品のファイルを作る
+
+`OkinawaPackingBingo.tsx` というファイルを作り、次をそのまま貼り付けます。置き場所はどこでも構いません（例：`components/OkinawaPackingBingo.tsx`）。
+
 ```tsx
-import { PackingBingo } from "packing-bingo";
+import { PackingBingo, type BingoItem } from "packing-bingo";
+
+// 沖縄の修学旅行の持ち物。ちょうど16個、左上から横に4つずつ並びます。
+const items: BingoItem[] = [
+  { emoji: "📖", label: "旅のしおり" },
+  { emoji: "🪪", label: "生徒手帳" },
+  { emoji: "🏥", label: "保険証コピー" },
+  { emoji: "👛", label: "おこづかい" },
+  { emoji: "👕", label: "着替え" },
+  { emoji: "🩱", label: "水着" },
+  { emoji: "🧴", label: "日焼け止め" },
+  { emoji: "🧢", label: "帽子" },
+  { emoji: "🕶️", label: "サングラス" },
+  { emoji: "🩴", label: "ビーチサンダル" },
+  { emoji: "🪥", label: "洗面用具" },
+  { emoji: "🛁", label: "タオル" },
+  { emoji: "💊", label: "常備薬・酔い止め" },
+  { emoji: "☂️", label: "折りたたみ傘" },
+  { emoji: "🛍️", label: "ビニール袋" },
+  { emoji: "📱", label: "スマホ・充電器" },
+];
+
+export function OkinawaPackingBingo() {
+  return <PackingBingo items={items} tag="沖縄修学旅行" />;
+}
+```
+
+### 3. 表示したい場所に置く
+
+表示したいページやコンポーネントで読み込み、置きたい場所に `<OkinawaPackingBingo />` と書きます。`import` のパスは、ファイルを置いた場所に合わせてください。
+
+```tsx
+import { OkinawaPackingBingo } from "./components/OkinawaPackingBingo";
+
+// JSXの中の、表示したい場所に
+<OkinawaPackingBingo />
+```
+
+Next.js（App Router）で専用のページを作るなら、`app/packing/page.tsx` を作って次を貼り付けます。`/packing` を開くと表示されます。
+
+```tsx
+import { OkinawaPackingBingo } from "@/components/OkinawaPackingBingo";
 
 export default function PackingPage() {
-  return <PackingBingo storageKey="kyoto-trip-2026" />;
+  return (
+    <main style={{ padding: 16 }}>
+      <OkinawaPackingBingo />
+    </main>
+  );
 }
 ```
 
-That's the whole setup. The card fills the width of its container, up to 720 px. With `storageKey`, each student's checks are saved in their browser, so they can close the page and come back.
+カードは置いた場所の幅いっぱい（最大720 px）に広がり、狭い場所ではスマホ向けの配置に自動で切り替わります。持ち物を変えたいときは `items` の中身を書き換えるだけです。`items` を省くと、一般的な修学旅行の持ち物リストになります。
 
-**Next.js App Router:** you can use the component straight from a Server Component page, as above, including `items` and `messages={en}`. Functions you write can't cross from a Server Component to a Client Component, though, so callbacks like `onChange` or `onBingo` stop the build with "Event handlers cannot be passed to Client Component props". For those, wrap the card in your own client component:
+Next.jsのServer Componentのページからでも、そのまま使えます。ただし、`onBingo` などの関数（コールバック）はServer Componentから渡せず、「Event handlers cannot be passed to Client Component props」というエラーでビルドが止まります。コールバックを使うときは、部品のファイルの1行目に `"use client";` を書いてください。
 
-```tsx
-// app/packing/PackingCard.tsx
-"use client";
+### Reactを使っていないページに置く場合
 
-import { PackingBingo } from "packing-bingo";
+HTMLの好きな場所に、次をそのまま貼り付けます。インストールは要りません。
 
-export function PackingCard() {
-  return <PackingBingo storageKey="kyoto-trip-2026" onBingo={(e) => console.log(e)} />;
-}
+```html
+<div id="packing-bingo"></div>
+<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.2/dist/packing-bingo.global.js"></script>
+<script>
+  PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
+    tag: "沖縄修学旅行",
+    items: [
+      { emoji: "📖", label: "旅のしおり" }, { emoji: "🪪", label: "生徒手帳" },
+      { emoji: "🏥", label: "保険証コピー" }, { emoji: "👛", label: "おこづかい" },
+      { emoji: "👕", label: "着替え" }, { emoji: "🩱", label: "水着" },
+      { emoji: "🧴", label: "日焼け止め" }, { emoji: "🧢", label: "帽子" },
+      { emoji: "🕶️", label: "サングラス" }, { emoji: "🩴", label: "ビーチサンダル" },
+      { emoji: "🪥", label: "洗面用具" }, { emoji: "🛁", label: "タオル" },
+      { emoji: "💊", label: "常備薬・酔い止め" }, { emoji: "☂️", label: "折りたたみ傘" },
+      { emoji: "🛍️", label: "ビニール袋" }, { emoji: "📱", label: "スマホ・充電器" },
+    ],
+  });
+</script>
 ```
 
-## Recipes
+## 使い方の例
 
-### Your own items and text
+### 持ち物と文言を変える
 
 ```tsx
 import { PackingBingo, en, type BingoItem } from "packing-bingo";
 
 const items: BingoItem[] = [
-  { emoji: "🛂", label: "Passport" },
-  { emoji: "🎫", label: "Tickets" },
-  // … exactly 16 items, row by row from the top left
+  { emoji: "🩱", label: "Swimsuit" },
+  { emoji: "🧴", label: "Sunscreen" },
+  // … ちょうど16個、左上から横に1行ずつ
 ];
 
-<PackingBingo items={items} messages={en} title="Kyoto Trip" tag="Class 2-B" storageKey="kyoto-2b" />;
+<PackingBingo items={items} messages={en} title="Okinawa Trip" tag="Class 2-B" />;
 ```
 
-- `items` needs exactly 16 entries. Any other count throws `[packing-bingo] "items" must have exactly 16 entries`.
-- `messages` is merged over the Japanese defaults, so `messages={{ reset: "Start over" }}` changes just that label. `en` is a complete English set. See [Messages](#messages) for every key.
-- On narrow cards, labels wrap after a `・`, so `常備薬・酔い止め` breaks as 常備薬・ / 酔い止め.
+- `items` はちょうど16個にしてください。それ以外の数だと `[packing-bingo] "items" must have exactly 16 entries` というエラーになります。
+- `messages` は日本語の既定値の上に重なるので、`messages={{ reset: "やり直す" }}` のように一部の文言だけを変えられます。`en` は英語の文言一式です。キーの一覧は[文言のキー](#文言のキー)にあります。
+- 狭いカードでは、ラベルは `・` の後ろで折り返します。`常備薬・酔い止め` は「常備薬・」と「酔い止め」の2行になります。
 
-### Save progress on your server
+### 保存のしかたを変える
 
-`storageKey` saves progress in one browser. To make progress follow a student to another device, keep the checks in your own state and pass them as `checked`, which makes the card controlled:
+何も指定しなければ、進み具合は持ち物リストから自動で決まるキーで、各自のブラウザに保存されます。持ち物リストが違うカードは別々に保存されるので、1つのサイトに複数のチェックリストを置いても混ざりません。
+
+- **キーを自分で決める：** `storageKey="okinawa-2026"` のように指定します。持ち物リストから決まるキーは、持ち物を1文字でも直すと変わり、カードは新しく始まります。生徒が使い始めたあとで持ち物を直す可能性があるなら、最初からキーを決めておくと、直したあとも続きから使えます。同じ持ち物のカードを2枚、別々に保存したいときも、それぞれにキーを付けます。
+- **保存しない：** `storageKey={null}` にします。
+
+### 自分のサーバーに保存する
+
+ブラウザへの保存は、その端末の中だけで使えます。別の端末でも続きから使いたい場合だけ、チェックを自分の state で持って `checked` で渡します（controlledといいます）。このときブラウザには保存しません。
 
 ```tsx
 import { useEffect, useRef, useState } from "react";
@@ -109,7 +185,7 @@ export function PackingCard({ studentId }: { studentId: string }) {
   const saving = useRef(Promise.resolve());
 
   useEffect(() => {
-    let current = true; // ignore a response that arrives after the student has changed
+    let current = true; // 生徒が切り替わったあとに届いた古い応答は使わない
     setChecked(null);
     fetch(`/api/packing/${studentId}`)
       .then((res) => res.json())
@@ -121,11 +197,11 @@ export function PackingCard({ studentId }: { studentId: string }) {
     };
   }, [studentId]);
 
-  if (!checked) return null; // or a placeholder
+  if (!checked) return null; // または同じ大きさの仮表示
 
   const save = (next: boolean[]) => {
     setChecked(next);
-    // Send one request at a time, so a slow earlier save can't overwrite a later one.
+    // 保存は1つずつ順に送る。遅れた古い保存が、新しい保存を上書きしないように。
     saving.current = saving.current
       .then(() => fetch(`/api/packing/${studentId}`, { method: "PUT", body: JSON.stringify({ checked: next }) }))
       .then(() => undefined, () => undefined);
@@ -135,31 +211,31 @@ export function PackingCard({ studentId }: { studentId: string }) {
 }
 ```
 
-Students tap faster than requests finish, so the example sends the saves one after another, and it drops a load that arrives after `studentId` has changed. Each save sends all 16 checks, so a later save always holds the latest state.
+生徒のタップは通信より速いので、この例では保存を順番に送り、`studentId` が変わったあとに届いた読み込みは捨てています。保存のたびに16個すべてを送るので、最後の保存がいつも最新の状態になります。
 
-How a controlled card behaves:
+controlledのカードの動き：
 
-- A tap doesn't change the card by itself. It calls `onChange` with the 16 booleans the user asked for, and the card follows when `checked` changes. If you don't update `checked`, the tap is undone.
-- When `checked` changes by exactly one item, the card plays it like a tap: stamp, sound, and any bingo or finale. A bigger change, such as data arriving from your server, is applied quietly, with no fanfare and no bonus for lines completed at once.
-- The reset button calls `onChange` with 16 `false` values.
-- `storageKey` is ignored.
+- タップしただけでは、カードは変わりません。ユーザーが求めた16個の状態で `onChange` が呼ばれ、`checked` が変わるとカードがそれに合わせます。`checked` を変えなければ、タップは取り消されます。
+- `checked` がちょうど1個だけ変わったときは、タップと同じように演出します（スタンプ、音、ビンゴやフィナーレ）。サーバーからデータが届いたときのように一度に何個も変わったときは、演出なしで静かに反映し、同時にそろった列のボーナスも付けません。
+- リセットボタンを押すと、16個すべて `false` で `onChange` が呼ばれます。
+- `storageKey` は使われません。
 
-### React to bingos
+### ビンゴの瞬間を受け取る
 
 ```tsx
 <PackingBingo
-  storageKey="kyoto-trip-2026"
+  items={items}
   onBingo={({ newLines, totalLines, score }) => analytics.track("bingo", { totalLines, score })}
   onPerfect={({ score, maxCombo }) => analytics.track("perfect", { score, maxCombo })}
 />
 ```
 
-- `onBingo` fires when a tap completes one or more lines. On the tap that completes the whole card, `onPerfect` fires instead.
-- `onChange` fires only for what the user does: a tap, the reset button, or `ref.reset()`. Changes you make through `checked` or `ref.setChecked()` don't trigger it.
-- `onBingo` and `onPerfect` fire whenever a change plays like a tap, including a one-item change of `checked`. Quiet updates and the first render fire nothing.
-- `onChange` runs first, then `onBingo` or `onPerfect`, after the card has updated. You can reset or unmount the card from inside any of them.
+- `onBingo` は、タップで1列以上そろったときに呼ばれます。カード全体がそろったタップでは、代わりに `onPerfect` が呼ばれます。
+- `onChange` は、ユーザーの操作（タップ、リセットボタン、`ref.reset()`）のときだけ呼ばれます。`checked` や `ref.setChecked()` で変えたときは呼ばれません。
+- `onBingo` と `onPerfect` は、タップと同じように演出した変化のときに呼ばれます。`checked` が1個だけ変わったときも含みます。静かに反映した変化や、最初の表示では呼ばれません。
+- 順番は、まず `onChange`、次に `onBingo` か `onPerfect` です。どれもカードの表示が変わったあとに呼ばれるので、中でカードをリセットしたり、画面から外したりしても大丈夫です。
 
-### Control the card from outside
+### 外から操作する
 
 ```tsx
 import { useRef } from "react";
@@ -169,233 +245,218 @@ function PackingPage() {
   const card = useRef<PackingBingoHandle>(null);
   return (
     <>
-      <button onClick={() => card.current?.reset()}>Start over</button>
-      <PackingBingo ref={card} storageKey="kyoto-trip-2026" />
+      <button onClick={() => card.current?.reset()}>最初からやり直す</button>
+      <PackingBingo ref={card} />
     </>
   );
 }
 ```
 
-The handle has `reset()`, `setChecked()` and `getState()`. See [Ref handle](#ref-handle). With a controlled card, change `checked` instead of calling `setChecked()`.
+`reset()`・`setChecked()`・`getState()` が使えます。くわしくは [ref](#ref) を見てください。controlledのカードでは、`setChecked()` ではなく `checked` を変えてください。
 
-### Theme and layout
+### 配色とレイアウト
 
-Set any of these CSS variables on the component or an ancestor:
+次のCSS変数を、カードかその親要素に指定します。
 
-| Variable | Used for | Default |
+| 変数 | 使われる場所 | 既定値 |
 | --- | --- | --- |
-| `--pkb-sun` | Board background | `#FFD54F` |
-| `--pkb-ink` | Lines, borders and text | `#2A1F14` |
-| `--pkb-paper` | Squares | `#FFFDF6` |
-| `--pkb-red` | Stamps and accents | `#E8473B` |
-| `--pkb-mint` | Completed lines | `#BDEBD2` |
-| `--pkb-font-fallback` | Font used before or instead of the display fonts | `sans-serif` |
+| `--pkb-sun` | カードの背景 | `#FFD54F` |
+| `--pkb-ink` | 線、枠、文字 | `#2A1F14` |
+| `--pkb-paper` | マス | `#FFFDF6` |
+| `--pkb-red` | スタンプとアクセント | `#E8473B` |
+| `--pkb-mint` | そろった列 | `#BDEBD2` |
+| `--pkb-font-fallback` | 見出しなどのフォントが使えないときのフォント | `sans-serif` |
 
 ```tsx
 <PackingBingo style={{ "--pkb-sun": "#9AD0F5" } as React.CSSProperties} />
 ```
 
-The card takes the full width of its container, up to 720 px, and centers itself. When its container is narrower than 560 px, it switches to a compact layout. This uses a container query, so the compact layout also kicks in inside a narrow sidebar on a wide screen. The height follows from the width. Because the server renders an empty `<div>`, the card appears after hydration; if layout shift matters, give its wrapper a `min-height`.
+カードは置いた場所の幅いっぱい（最大720 px）に広がり、中央に寄ります。置いた場所の幅が560 pxより狭いと、スマホ向けの配置に切り替わります。画面の幅ではなく置いた場所の幅で決まるので、広い画面のサイドバーに置いてもスマホ向けの配置になります。高さは幅から自動で決まります。サーバー側では空の `<div>` を出すので、カードはhydrationのあとに現れます。レイアウトのずれが気になるときは、外側の要素に `min-height` を付けてください。
 
 ## API
 
-### Props
+### props
 
-| Prop | Type | Default | What it does |
+| prop | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
-| `items` | `readonly BingoItem[]` (exactly 16) | `DEFAULT_ITEMS` (Japanese school-trip list) | The squares, row by row: `{ emoji, label }` |
-| `messages` | `Partial<Messages>` | `ja` | UI text, merged over the Japanese defaults. `en` is included |
-| `title`, `tag`, `subtitle` | `string` | from `messages` | The heading, the small label above it, and the line below it |
-| `storageKey` | `string` | none | Save the checks in localStorage under this key. Uncontrolled cards only |
-| `defaultChecked` | `readonly boolean[]` (16) | all `false` | Initial checks of an uncontrolled card, used when nothing is saved under `storageKey` |
-| `checked` | `readonly boolean[]` (16) | none | Makes the card controlled. See [Save progress on your server](#save-progress-on-your-server) |
-| `onChange` | `(checked: boolean[]) => void` | none | The user tapped or reset. For a controlled card, this is the requested state |
-| `onBingo` | `(event: BingoEvent) => void` | none | A tap completed one or more lines |
-| `onPerfect` | `(event: PerfectEvent) => void` | none | A tap completed the card |
-| `sound` | `boolean` | `true` | Initial sound setting, until the user picks one with the 🔊 button |
-| `fonts` | `boolean` | `true` | Load Dela Gothic One and M PLUS Rounded 1c from Google Fonts |
-| `demo` | `boolean` | `false` | Pre-fill six items (when nothing is saved) and show demo buttons |
-| `className`, `style` | | none | Applied to the wrapper `<div>` |
-| `ref` | `Ref<PackingBingoHandle>` | none | See [Ref handle](#ref-handle) |
+| `items` | `readonly BingoItem[]`（ちょうど16個） | `DEFAULT_ITEMS`（一般的な修学旅行の持ち物） | マスの中身。左上から横に1行ずつ：`{ emoji, label }` |
+| `messages` | `Partial<Messages>` | `ja` | 画面の文言。日本語の既定値の上に重なります。英語の `en` も入っています |
+| `title`・`tag`・`subtitle` | `string` | `messages` の値 | 見出し、その上の小さなラベル、その下の1行 |
+| `storageKey` | `string \| null` | 持ち物から自動で決まる | 進み具合を保存するlocalStorageのキー。`null` で保存しません。controlledのときは使われません |
+| `defaultChecked` | `readonly boolean[]`（16個） | すべて `false` | uncontrolledのカードの最初の状態。保存された進み具合があれば、そちらが優先です |
+| `checked` | `readonly boolean[]`（16個） | なし | 指定するとcontrolledになります。[自分のサーバーに保存する](#自分のサーバーに保存する)を見てください |
+| `onChange` | `(checked: boolean[]) => void` | なし | ユーザーがタップかリセットをした。controlledのときは、求められた状態 |
+| `onBingo` | `(event: BingoEvent) => void` | なし | タップで1列以上そろった |
+| `onPerfect` | `(event: PerfectEvent) => void` | なし | タップでカード全体がそろった |
+| `sound` | `boolean` | `true` | 音の最初の設定。ユーザーが🔊ボタンで選ぶまで使われます |
+| `fonts` | `boolean` | `true` | Dela Gothic OneとM PLUS Rounded 1cをGoogle Fontsから読み込む |
+| `demo` | `boolean` | `false` | 6マス埋まった状態から始め、デモ用のボタンを出します。`storageKey` を指定しない限り保存しません |
+| `className`・`style` | | なし | 外側の `<div>` に付きます |
+| `ref` | `Ref<PackingBingoHandle>` | なし | [ref](#ref) を見てください |
 
-Props are compared by value, so inline arrays and objects are fine. When the content of `items`, `title`, `tag`, `subtitle`, `storageKey`, `sound`, `fonts`, `demo` or the text in `messages` changes, the card is rebuilt. The checks are kept, unless `storageKey` changed, in which case the card loads that key's own progress. The score is then recomputed, as described in [Scoring](#scoring). Message functions can use your props or state: when `messages` changes, the status line is redrawn without a rebuild.
+propsは中身で比べるので、配列やオブジェクトをその場で書いても構いません。`items`・`title`・`tag`・`subtitle`・`storageKey`・`sound`・`fonts`・`demo`、または `messages` の文字列が変わると、カードを作り直します。保存先のキーが変わらなければ、チェックはそのまま残ります。キーが変わったとき（`items` を変えて自動のキーが変わったときも含む）は、新しいキーに保存された進み具合を読み込みます。得点は[得点のルール](#得点のルール)のとおり計算し直します。`messages` の関数はpropsやstateを使っても構いません。`messages` が変わると、作り直さずに下の1行だけを描き直します。
 
-### Events
+### イベント
 
 ```ts
 interface BingoEvent {
-  newLines: number[]; // lines completed by this tap, as indices into LINES
-  totalLines: number; // lines completed so far
-  score: number;      // score after this tap
+  newLines: number[]; // このタップでそろった列（LINESの番号）
+  totalLines: number; // これまでにそろった列の数
+  score: number;      // このタップのあとの得点
 }
 
 interface PerfectEvent {
-  score: number;      // final score, including the 1000-point bonus the first time
+  score: number;      // 最終得点。初めて全部そろえたときは1000点のボーナスを含む
   maxCombo: number;
 }
 ```
 
-### Ref handle
+### ref
 
 ```ts
 interface PackingBingoHandle {
-  /** Same as the reset button: clears the card and score, and calls onChange. A controlled card only calls onChange. */
+  /** リセットボタンと同じ。カードと得点を消して onChange を呼ぶ。controlled のカードでは onChange を呼ぶだけ。 */
   reset(): void;
-  /** A one-item change plays like a tap; bigger changes apply quietly. Doesn't call onChange. */
+  /** 1個だけの変化はタップと同じように演出し、それより大きな変化は静かに反映する。onChange は呼ばない。 */
   setChecked(checked: readonly boolean[]): void;
-  /** null before mount and on the server. */
+  /** 表示前とサーバー側では null。 */
   getState(): PackingBingoState | null;
 }
 
 interface PackingBingoState {
-  checked: boolean[]; // 16 booleans, row by row
-  lines: number[];    // completed lines, as indices into LINES
+  checked: boolean[]; // 16個、左上から横に1行ずつ
+  lines: number[];    // そろった列（LINESの番号）
   score: number;
   maxCombo: number;
-  complete: boolean;  // all 16 checked
+  complete: boolean;  // 16個すべてにチェックが付いている
 }
 ```
 
-`LINES` is exported. Its entries 0–3 are the rows, 4–7 the columns, 8 the diagonal from the top left, and 9 the diagonal from the top right.
+`LINES` もexportしています。0〜3がヨコの列、4〜7がタテの列、8が左上からのナナメ、9が右上からのナナメです。
 
-### Scoring
+### 得点のルール
 
-- An item checked for the first time scores 10 × the current combo. A combo is a chain of taps less than 2.5 s apart.
-- Completing n lines with one tap scores 100 × n². Each line scores only once.
-- Completing the card for the first time adds 1000.
-- Unchecking never takes points away, and checking an item again earns nothing.
-- After a quiet update or a rebuild (loading saved progress, for example), the score is recomputed as 10 per checked item plus 100 per completed line, and the max combo starts again from 0.
+- 初めてチェックした持ち物は、10点 × そのときのコンボ数。コンボは、2.5秒以内に続けたタップの数です。
+- 1回のタップでn列そろうと、100点 × n²。同じ列で得点するのは1回だけです。
+- 初めてカード全体をそろえると、1000点を足します。
+- チェックを外しても得点は減らず、付け直しても増えません。
+- 静かに反映したあとや作り直したあと（保存された進み具合を読み込んだときなど）は、チェックした持ち物1個につき10点、そろった列1つにつき100点で計算し直し、最大コンボは0からになります。
 
-### Messages
+### 文言のキー
 
-`messages` accepts any subset of these keys. The full Japanese and English sets are `ja` and `en` in [`src/messages.ts`](src/messages.ts).
+`messages` には、次のキーを好きなだけ指定できます。日本語と英語の一式は、[`src/messages.ts`](src/messages.ts) の `ja` と `en` です。
 
-- **Text:** `title`, `tag`, `subtitle`, `packed`, `bingo`, `score`, `reset`, `soundOn`, `soundOff`, `stamp`, `reachBadge`, `reachPop`, `bannerSingle`, `bannerDouble`, `bannerTriple`, `statusDone`, `perfectTag`, `perfectStamp`, `perfectTitle`, `perfectBody`, `statScore`, `statCombo`, `statLines`, `close`, `demoLabel`, `demoBingo`, `demoPerfect`, `demoRestore`. In `perfectStamp` and `perfectBody`, `\n` starts a new line.
-- **Functions:** `combo(n)`, `comboPop(n)`, `bannerNth(totalLines)`, `bannerMulti(newLines)`, `statusStart(left)`, `statusLines(lines, left)`, `statusReach(labels)`, `perfectBonus(points)`. Each returns a string.
+- **文字列：** `title`、`tag`、`subtitle`、`packed`、`bingo`、`score`、`reset`、`soundOn`、`soundOff`、`stamp`、`reachBadge`、`reachPop`、`bannerSingle`、`bannerDouble`、`bannerTriple`、`statusDone`、`perfectTag`、`perfectStamp`、`perfectTitle`、`perfectBody`、`statScore`、`statCombo`、`statLines`、`close`、`demoLabel`、`demoBingo`、`demoPerfect`、`demoRestore`。`perfectStamp` と `perfectBody` では、`\n` で改行します。
+- **関数（どれも文字列を返します）：** `combo(n)`、`comboPop(n)`、`bannerNth(totalLines)`、`bannerMulti(newLines)`、`statusStart(left)`、`statusLines(lines, left)`、`statusReach(labels)`、`perfectBonus(points)`。
 
-### Exports
+### export
 
-- `packing-bingo`: `PackingBingo`, `createPackingBingo`, `LINES`, `DEFAULT_ITEMS`, `ja`, `en`, and the types `PackingBingoProps`, `PackingBingoHandle`, `PackingBingoState`, `BingoItem`, `BingoEvent`, `PerfectEvent`, `Messages`, `PackingBingoOptions`, `PackingBingoInstance`.
-- `packing-bingo/core`: the same without the React component and its types (`PackingBingoProps`, `PackingBingoHandle`), so it doesn't import React.
+- `packing-bingo`：`PackingBingo`、`createPackingBingo`、`LINES`、`DEFAULT_ITEMS`、`ja`、`en`。型は `PackingBingoProps`、`PackingBingoHandle`、`PackingBingoState`、`BingoItem`、`BingoEvent`、`PerfectEvent`、`Messages`、`PackingBingoOptions`、`PackingBingoInstance`。
+- `packing-bingo/core`：Reactのコンポーネントとその型（`PackingBingoProps`、`PackingBingoHandle`）を除いた残り。Reactを読み込みません。
 
-## Integration notes
+## 組み込むときの注意
 
-### What the card adds to your page
+### ページに追加されるもの
 
-On first mount, the card appends `<style id="pkb-styles">` to `<head>`, shared by every card and left in place after unmount. Unless `fonts={false}`, it also appends `<link id="pkb-fonts">` for Google Fonts. All CSS is scoped under `.pkb`, and every class and keyframe name starts with `pkb-`, so the rest of your page is left alone.
+最初に表示したとき、`<head>` に `<style id="pkb-styles">` を追加します。これはすべてのカードで共有し、カードを外したあとも残ります。`fonts={false}` でなければ、Google Fonts用の `<link id="pkb-fonts">` も追加します。CSSはすべて `.pkb` の中だけに効き、クラス名とアニメーション名はすべて `pkb-` で始まるので、ページのほかの部分には影響しません。
 
-Everything the card draws (the confetti canvas, the banner, the finale screen) stays inside the card's own box. Nothing is `position: fixed` or attached to `<body>`, and the card is its own stacking context, so a sticky site header stays on top of it.
+カードが描くもの（紙吹雪、BINGO!の文字、フィナーレの画面）は、すべてカード自身の枠の中に収まります。`position: fixed` を使ったり `<body>` に要素を足したりはしません。カードは独立した重なり順（stacking context）を持つので、上部に固定したヘッダーの上に描かれることもありません。
 
-### Content Security Policy
+### CSP（Content Security Policy）
 
-The injected `<style>` and a few inline `style` attributes need `style-src 'unsafe-inline'`. With fonts on, also allow `https://fonts.googleapis.com` in `style-src` and `https://fonts.gstatic.com` in `font-src`.
+追加する `<style>` と一部の `style` 属性のために、`style-src 'unsafe-inline'` が必要です。フォントを読み込む場合は、`style-src` に `https://fonts.googleapis.com`、`font-src` に `https://fonts.gstatic.com` も許可してください。
 
-### Fonts
+### フォント
 
-The card uses Dela Gothic One and M PLUS Rounded 1c. With `fonts={false}`, nothing is requested from Google. If your site already loads fonts with those family names (self-hosted, for example), the card uses them. Otherwise it falls back to `--pkb-font-fallback`.
+Dela Gothic OneとM PLUS Rounded 1cを使います。`fonts={false}` にするとGoogleには何も取りに行きません。サイトで同じ名前のフォントを読み込んでいれば（自分のサーバーに置いている場合など）それを使い、なければ `--pkb-font-fallback` のフォントを使います。
 
-### Sound and vibration
+### 音と振動
 
-Sound is synthesized with the Web Audio API. The audio context is only created after the user has interacted with the page, so the browser shows no autoplay warnings. The 🔊 button's choice is stored in localStorage as `packing-bingo-muted`, and every card created afterwards starts with it, including after a reload. Cards already on screen keep their own setting. Taps and bingos vibrate where the Vibration API exists, which in practice means Android browsers.
+音はWeb Audio APIで合成しています。音を鳴らす仕組みは、ユーザーがページを操作したあとにだけ作るので、ブラウザの自動再生の警告は出ません。🔊ボタンの選択は、localStorageの `packing-bingo-muted` に保存されます。そのあとに作られるカードは、ページを読み込み直したあとも含めて、この設定で始まります。すでに表示中のほかのカードは、それぞれの設定のままです。タップやビンゴのときは、Vibration APIがある端末で振動します。実際にはAndroidのブラウザです。
 
-### Saved data
+### 保存されるデータ
 
-With `storageKey`, the checks are stored under that key as a JSON array of 16 booleans. The score isn't stored. Saved progress takes priority over `defaultChecked`. If two cards on one page should keep separate progress, give each its own key. Blocked storage, as in some private browsing modes, is handled: the card just doesn't save.
+チェックは、16個の真偽値のJSON配列としてlocalStorageに保存されます。キーは `storageKey`、指定しなければ `packing-bingo:` で始まる、持ち物リストから決まるキーです。得点は保存しません。保存された進み具合は `defaultChecked` より優先されます。プライベートブラウズなどで保存できない環境では、保存せずにそのまま動きます。
 
-### Accessibility
+### アクセシビリティ
 
-Each square is a native checkbox inside a `<label>`, so Tab and Space work and the item name is the accessible name. The emoji and the stamp are hidden from assistive technology. The status line is a polite live region. With `prefers-reduced-motion`, shaking, bouncing and particles are turned off. It hasn't been tested with a screen reader yet.
+マスは `<label>` の中の本物のチェックボックスなので、TabキーとSpaceキーで操作でき、持ち物の名前がそのまま読み上げられます。絵文字とスタンプは、読み上げの対象から外しています。下の1行は、変化を控えめに読み上げる領域（polite live region）です。`prefers-reduced-motion` のときは、揺れ、弾み、紙吹雪を止めます。スクリーンリーダーでの確認は、まだしていません。
 
-### Browser support and testing
+### 対応ブラウザと確認済みの範囲
 
-The card uses CSS container queries (Chrome and Edge 105+, Safari 16+, Firefox 110+) and `:has()` for the keyboard focus ring (Firefox 121+).
+CSSのコンテナクエリ（Chrome・Edge 105以上、Safari 16以上、Firefox 110以上）と、キーボード操作時の枠に `:has()`（Firefox 121以上）を使っています。
 
-Tested so far:
+確認済み：
 
-- React 19 in StrictMode, with three cards on one page, controlled and uncontrolled
-- Server rendering with `renderToString`, ESM and CommonJS
-- A Next.js 16 App Router production build, using the card from a Server Component page and from a client component
-- Installing from npm with npm and pnpm
-- Taps scripted in Chromium at desktop and phone sizes, including resets and callbacks that land mid-celebration
+- React 19のStrictModeで、1ページに3枚、controlledとuncontrolledの両方
+- `renderToString` でのサーバー側の表示（ESMとCommonJS）
+- Next.js 16のApp Routerで本番ビルドし、Server Componentのページとclient componentの両方から使う
+- npmとpnpmでのnpmからのインストール
+- Chromiumで、パソコンとスマホの大きさでの自動タップ。演出の途中でのリセットやコールバックも含む
+- 自動保存。持ち物リストごとに別々に保存されること、`storageKey={null}` で保存しないこと、持ち物を変えると新しく始まり、戻すと前の進み具合が戻ること
 
-These scripted browser tests aren't part of this repository yet. Safari, Firefox and real phones haven't been tried, and the sound hasn't been checked on a real device. Emoji come from each device's emoji font, so they look different on each system.
+これらの自動テストは、まだこのリポジトリには入っていません。Safari、Firefox、実際のスマホでは試しておらず、実機での音も確かめていません。絵文字は端末の絵文字フォントで表示されるので、端末ごとに見た目が違います。
 
-## Without React
+## Reactなしで使う
 
-The engine has no framework dependency:
+エンジン部分はフレームワークに依存しません。
 
 ```ts
 import { createPackingBingo } from "packing-bingo/core";
 
 const card = createPackingBingo(document.getElementById("bingo")!, {
-  storageKey: "trip",
+  tag: "沖縄修学旅行",
   onBingo: (e) => console.log(e),
 });
-// card.reset(), card.getState(), card.setChecked(next, { animate: true }), card.destroy()
+// card.reset()、card.getState()、card.setChecked(next, { animate: true })、card.destroy()
 ```
 
-Its options are the React props without `checked`, `className`, `style` and `ref` (type `PackingBingoOptions`). For a controlled card, pass `controlled: true` and update it with `setChecked()`. Without `{ animate: true }`, `setChecked()` always applies quietly.
+オプションは、Reactのpropsから `checked`・`className`・`style`・`ref` を除いたものです（型は `PackingBingoOptions`）。controlledにするときは `controlled: true` を渡し、`setChecked()` で状態を変えます。`setChecked()` は、`{ animate: true }` を付けないと、いつも静かに反映します。
 
-Without a bundler, load the browser build from a CDN. It defines a global `PackingBingo`:
+バンドラーを使わないページでは、CDNからブラウザ用のファイルを読み込みます。グローバル変数 `PackingBingo` ができます。使い方は[クイックスタート](#reactを使っていないページに置く場合)にあります。
 
-```html
-<div id="bingo"></div>
-<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.1/dist/packing-bingo.global.js"></script>
-<script>
-  PackingBingo.createPackingBingo(document.getElementById("bingo"), { storageKey: "trip" });
-</script>
-```
+## 単体のページ
 
-## Standalone page
-
-`index.html` is the whole app in one file, so you can open it directly or put it on any static host. It saves progress in the browser.
+`index.html` は、アプリ全体が1つに入ったファイルです。そのまま開くことも、静的なホスティングに置くこともできます。進み具合はブラウザに保存されます。
 
 ```sh
 git clone https://github.com/Jin-hiroo/packing-bingo.git
 cd packing-bingo
-open index.html        # macOS; on other systems, open the file in a browser
+open index.html        # macOSの場合。ほかのOSでは、ファイルをブラウザで開いてください
 ```
 
-Add `?demo` to the URL to start part-way through and show the demo buttons: "▶ ビンゴを見る" plays a bingo, and "▶ コンボ → パーフェクト" plays a combo run to a full card. On GitHub Pages, use **Settings → Pages → Deploy from a branch → `main` / root**.
+URLの末尾に `?demo` を付けると、途中まで埋まった状態から始まり、デモ用のボタンが出ます。「▶ ビンゴを見る」でビンゴを、「▶ コンボ → パーフェクト」でコンボからパーフェクトまでを再生します。GitHub Pagesで公開するときは、**Settings → Pages → Deploy from a branch → `main` / root** を選びます。
 
-To change the page, edit the options in its last `<script>`, which calls `PackingBingo.createPackingBingo(…)`. To change the defaults for every build, edit `src/items.ts` or `src/messages.ts` and run `npm run build`.
+ページの中身を変えるときは、最後の `<script>` にある `PackingBingo.createPackingBingo(…)` のオプションを書き換えます。どのビルドでも使われる既定値を変えるときは、`src/items.ts` か `src/messages.ts` を編集して `npm run build` を実行します。
 
-## Development
+## 開発
 
 ```sh
-npm install          # also builds dist/ and index.html
-npm run build        # dist/ (ESM, CJS, types, browser bundle) and the standalone index.html
+npm install          # dist/ と index.html もビルドされます
+npm run build        # dist/（ESM、CJS、型、ブラウザ用）と単体の index.html
 npm run typecheck
 ```
 
-`index.html` is generated from `src/` by `scripts/build-standalone.mjs`, so don't edit it by hand.
+`index.html` は `scripts/build-standalone.mjs` が `src/` から作るので、直接編集しないでください。
 
-## 日本語
+## English
 
-修学旅行の持ち物チェックリストを4×4のビンゴにする、Reactのコンポーネントです。持ち物をかばんに入れるたびにマスをタップしてスタンプを押し、タテ・ヨコ・ナナメがそろうとビンゴになります。
+Packing Bingo is a React component that turns a school-trip packing checklist into a 4×4 bingo card, with combos, fanfares and fireworks. Progress is saved in each student's browser automatically. It has no runtime dependencies and is safe to render on the server (it ships with `"use client"`).
 
 ```sh
 npm install packing-bingo
 ```
 
 ```tsx
-import { PackingBingo } from "packing-bingo";
+import { PackingBingo, en } from "packing-bingo";
 
-<PackingBingo storageKey="kyoto-trip-2026" />;
+<PackingBingo messages={en} />;
 ```
 
-- React 18以上で動きます。ほかに依存するパッケージはなく、CSSの読み込みも要りません。
-- `storageKey` を付けると、チェックがその人のブラウザ（localStorage）に保存されます。
-- 持ち物は `items`（ちょうど16個）で、文言は `messages` で変えられます。英語の文言は `en` です。
-- 自分のサーバーに保存したいときは、`checked` と `onChange` を使って親側で状態を持ちます（[Save progress on your server](#save-progress-on-your-server)）。
-- Next.jsのApp Routerでは、Server Componentのページにそのまま置けます（`items` や `messages={en}` も渡せます）。ただし、`onChange` などのコールバックは渡せないので、使うときは `"use client"` を付けた自分のコンポーネントで包んでください。
-- 配色はCSS変数（`--pkb-sun` など）で変えられます。Google Fontsを読み込みたくないときは `fonts={false}` にします。
-- CSP（Content Security Policy）を設定している場合は、`style-src 'unsafe-inline'` が必要です。
+The default UI text is Japanese; `en` is a complete English set. Pass exactly 16 `items` (`{ emoji, label }`) to use your own list. The sections above cover the props, events and integration notes; the code snippets and type names can be read as they are.
 
-詳しい仕様は [API](#api) と [Integration notes](#integration-notes) にあります。
-
-## License
+## ライセンス
 
 [MIT](LICENSE) © 2026 Jin-hiroo.
 
-The Dela Gothic One and M PLUS Rounded 1c fonts are loaded from Google Fonts and are licensed under the SIL Open Font License. They aren't included in this repository.
+Dela Gothic OneとM PLUS Rounded 1cのフォントはGoogle Fontsから読み込んでおり、SIL Open Font Licenseで提供されています。このリポジトリには含まれていません。

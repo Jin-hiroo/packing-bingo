@@ -6,6 +6,7 @@ import {
   type PackingBingoOptions,
   type PackingBingoState,
 } from "./core";
+import { resolveStorageKey } from "./storage-key";
 
 export interface PackingBingoProps extends Omit<PackingBingoOptions, "controlled" | "defaultChecked"> {
   /** Controlled state (16 booleans). Update it from `onChange`. */
@@ -42,7 +43,9 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
   // The state to restore if the card has to be rebuilt (new items, title, …), and the storage
   // key it belongs to: checks saved under one key must not carry over to another.
   const latest = useRef<readonly boolean[] | undefined>(checked ?? defaultChecked);
-  const latestKey = useRef(config.storageKey);
+  // The key the card actually saves under (derived from the items when `storageKey` is omitted).
+  const storageKey = resolveStorageKey({ ...config, controlled });
+  const latestKey = useRef(storageKey);
   if (controlled) latest.current = checked;
 
   // Rebuild only when something that shapes the markup changes. Message *functions* are left
@@ -69,7 +72,7 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
       ...config,
       messages: liveMessages,
       controlled,
-      defaultChecked: controlled || latestKey.current === config.storageKey ? latest.current : defaultChecked,
+      defaultChecked: controlled || latestKey.current === storageKey ? latest.current : defaultChecked,
       onChange: (next) => {
         if (!controlled) latest.current = next;
         callbacks.current.onChange?.(next);
@@ -82,7 +85,7 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
       // Keep the current checks (including ones set through the ref) for the next build, and
       // always record their key, so they can't be carried into another key later.
       if (!controlled) latest.current = instance.getState().checked;
-      latestKey.current = config.storageKey;
+      latestKey.current = storageKey;
       instance.destroy();
       if (inst.current === instance) inst.current = null;
     };
