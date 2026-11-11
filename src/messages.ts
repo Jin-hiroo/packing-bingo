@@ -2,6 +2,7 @@
 export interface Messages {
   title: string;
   tag: string;
+  /** A line under the title; empty (not shown) by default. */
   subtitle: string;
   packed: string;
   bingo: string;
@@ -12,6 +13,8 @@ export interface Messages {
   soundOn: string;
   soundOff: string;
   stamp: string;
+  /** Text on the FREE square in the center (with `free`). */
+  free: string;
   reachBadge: string;
   reachPop: string;
   bannerSingle: string;
@@ -19,6 +22,7 @@ export interface Messages {
   bannerTriple: string;
   bannerNth: (totalLines: number) => string;
   bannerMulti: (newLines: number) => string;
+  /** The status line before the first line is complete; empty by default. */
   statusStart: (left: number) => string;
   statusLines: (lines: number, left: number) => string;
   /** `labels` are the items that would each complete a line right now. */
@@ -28,8 +32,8 @@ export interface Messages {
   /** Text inside the round stamp; `\n` starts a new line. */
   perfectStamp: string;
   perfectTitle: string;
-  /** `\n` starts a new line. */
-  perfectBody: string;
+  /** `\n` starts a new line. As a function, it gets the number of items on the card. */
+  perfectBody: string | ((total: number) => string);
   perfectBonus: (points: number) => string;
   statScore: string;
   statCombo: string;
@@ -45,7 +49,7 @@ export interface Messages {
 export const ja: Messages = {
   title: "持ちものビンゴ",
   tag: "修学旅行",
-  subtitle: "タップでスタンプ。タテ・ヨコ・ナナメでビンゴ！",
+  subtitle: "",
   packed: "そろった",
   bingo: "BINGO",
   score: "SCORE",
@@ -55,6 +59,7 @@ export const ja: Messages = {
   soundOn: "🔊 音あり",
   soundOff: "🔇 音なし",
   stamp: "OK",
+  free: "FREE",
   reachBadge: "リーチ",
   reachPop: "リーチ!",
   bannerSingle: "BINGO!",
@@ -62,7 +67,7 @@ export const ja: Messages = {
   bannerTriple: "トリプルビンゴ!",
   bannerNth: (n) => `${n} ライン目！`,
   bannerMulti: (n) => `一気に ${n} ライン！`,
-  statusStart: (left) => `のこり ${left} こ。まずは1ラインそろえよう`,
+  statusStart: () => "",
   statusLines: (lines, left) => `ビンゴ ${lines} ライン！ のこり ${left} こ`,
   statusReach: (labels) =>
     `リーチ！ あと${labels.slice(0, 2).map((l) => `「${l}」`).join("か")}${labels.length > 2 ? "など" : ""}でビンゴ`,
@@ -70,7 +75,7 @@ export const ja: Messages = {
   perfectTag: "🏆 PERFECT",
   perfectStamp: "準備\n完了",
   perfectTitle: "パーフェクト！",
-  perfectBody: "16こ ぜんぶそろった！\n忘れ物ゼロで、いってらっしゃい！",
+  perfectBody: (n) => `${n}こ ぜんぶそろった！\n忘れ物ゼロで、いってらっしゃい！`,
   perfectBonus: (n) => `PERFECT BONUS +${n}`,
   statScore: "SCORE",
   statCombo: "MAX COMBO",
@@ -86,7 +91,7 @@ export const ja: Messages = {
 export const en: Messages = {
   title: "Packing Bingo",
   tag: "School trip",
-  subtitle: "Tap to stamp. Rows, columns and diagonals all count!",
+  subtitle: "",
   packed: "PACKED",
   bingo: "BINGO",
   score: "SCORE",
@@ -96,6 +101,7 @@ export const en: Messages = {
   soundOn: "🔊 Sound on",
   soundOff: "🔇 Muted",
   stamp: "OK",
+  free: "FREE",
   reachBadge: "REACH",
   reachPop: "Reach!",
   bannerSingle: "BINGO!",
@@ -103,7 +109,7 @@ export const en: Messages = {
   bannerTriple: "TRIPLE BINGO!",
   bannerNth: (n) => `Line ${n}!`,
   bannerMulti: (n) => `${n} lines at once!`,
-  statusStart: (left) => `${left} to go. Finish a line first!`,
+  statusStart: () => "",
   statusLines: (lines, left) => `${lines} bingo line${lines === 1 ? "" : "s"}! ${left} to go`,
   statusReach: (labels) =>
     `Reach! Pack ${labels.slice(0, 2).join(" or ")}${labels.length > 2 ? " (or more)" : ""} for a bingo`,
@@ -111,7 +117,7 @@ export const en: Messages = {
   perfectTag: "🏆 PERFECT",
   perfectStamp: "ALL\nSET",
   perfectTitle: "Perfect!",
-  perfectBody: "All 16 packed!\nHave a great trip!",
+  perfectBody: (n) => `All ${n} packed!\nHave a great trip!`,
   perfectBonus: (n) => `PERFECT BONUS +${n}`,
   statScore: "SCORE",
   statCombo: "MAX COMBO",
