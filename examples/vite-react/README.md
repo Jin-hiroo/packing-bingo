@@ -11,7 +11,6 @@ npm run dev
 
 ## 見どころ
 
-- `src/OkinawaPackingBingo.tsx`：沖縄の修学旅行の持ち物16個を入れた部品です。READMEのクイックスタートと同じ内容です。
-- `src/App.tsx`：ページの中の表示したい場所に `<OkinawaPackingBingo />` を1行置いています。
+- `src/App.tsx`：持ち物16個のリストを作り、ページの中の表示したい場所に `<PackingBingo items={items} />` を1行置いています。READMEのクイックスタートと同じです。持ち物を変えるときは、このリストを書き換えます。
 
 進み具合は、開いたブラウザに自動で保存されます。保存の設定は要りません。
