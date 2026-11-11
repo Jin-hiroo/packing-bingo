@@ -129,7 +129,7 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
 
 ```html
 <div id="packing-bingo"></div>
-<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.2/dist/packing-bingo.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.3/dist/packing-bingo.global.js"></script>
 <script>
   PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
     items: [
