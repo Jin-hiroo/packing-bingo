@@ -9,9 +9,9 @@ import {
 import { resolveStorageKey } from "./storage-key";
 
 export interface PackingBingoProps extends Omit<PackingBingoOptions, "controlled" | "defaultChecked"> {
-  /** Controlled state (16 booleans). Update it from `onChange`. */
+  /** Controlled state (one boolean per item). Update it from `onChange`. */
   checked?: readonly boolean[];
-  /** Initial state for an uncontrolled card (16 booleans), used when nothing is saved under `storageKey`. */
+  /** Initial state for an uncontrolled card (one boolean per item), used when nothing is saved under `storageKey`. */
   defaultChecked?: readonly boolean[];
   className?: string;
   style?: CSSProperties;
@@ -28,7 +28,7 @@ export interface PackingBingoHandle {
 type MessageKey = keyof Messages;
 
 /**
- * A 4×4 packing-list bingo card. Client-only: it renders an empty <div> on the server and
+ * A packing-list bingo card (4×4 by default; any size from 2×2 to 10×10, optionally with a FREE center). Client-only: it renders an empty <div> on the server and
  * builds the card after mount, so it is safe in Next.js (it ships with "use client").
  */
 export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(function PackingBingo(props, ref) {

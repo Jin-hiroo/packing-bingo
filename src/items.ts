@@ -6,6 +6,7 @@ export interface BingoItem {
 
 /**
  * The default 16 school-trip items (Japanese), listed row by row from the top left.
+ * Smaller cards (`size` 2 or 3, without `items`) use the first ones.
  * Labels keep each unbreakable run to about 6 characters so they fit the narrow (phone) card;
  * `\u200B` marks where a longer label may wrap.
  */

@@ -1,8 +1,8 @@
-import { DEFAULT_ITEMS, type BingoItem } from "./items";
+import { layoutItems, type LayoutOptions } from "./layout";
+import type { BingoItem } from "./items";
 
 /** The options that decide where a card saves its checks. */
-export interface StorageKeyOptions {
-  items?: readonly BingoItem[];
+export interface StorageKeyOptions extends LayoutOptions {
   storageKey?: string | null;
   controlled?: boolean;
   demo?: boolean;
@@ -19,7 +19,8 @@ export function resolveStorageKey(options: StorageKeyOptions): string | null {
   if (options.controlled) return null;
   if (options.storageKey !== undefined) return options.storageKey || null;
   if (options.demo) return null;
-  return itemsKey(options.items ?? DEFAULT_ITEMS);
+  // The items the card actually shows (`size` without `items` takes the first default items).
+  return itemsKey(layoutItems(options));
 }
 
 function itemsKey(items: readonly BingoItem[]): string {

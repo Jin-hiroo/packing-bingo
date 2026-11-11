@@ -1,31 +1,35 @@
 import { DEFAULT_ITEMS, type BingoItem } from "./items";
+import { bingoLines, resolveLayout, type Layout } from "./layout";
 import { en, ja, type Messages } from "./messages";
 import { createSound } from "./sound";
 import { resolveStorageKey } from "./storage-key";
 import { CSS, FONT_URL } from "./styles";
 
-export { DEFAULT_ITEMS, ja, en };
+export { DEFAULT_ITEMS, ja, en, bingoLines };
 export type { BingoItem, Messages };
 
-/** The 10 winning lines of a 4×4 card: 4 rows, 4 columns, 2 diagonals (indices are row-major). */
-export const LINES: readonly (readonly number[])[] = [
-  [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
-  [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
-  [0, 5, 10, 15], [3, 6, 9, 12],
-];
+/**
+ * The 10 winning lines of a 4×4 card: 4 rows, 4 columns, 2 diagonals (indices are row-major).
+ * For other sizes, use `bingoLines(size, free)`.
+ */
+export const LINES: readonly (readonly number[])[] = bingoLines(4);
 
 export interface PackingBingoState {
-  /** 16 booleans, row-major. */
+  /** One boolean per item, row by row (the FREE square is not included). */
   checked: boolean[];
-  /** Indices into LINES of the completed lines. */
+  /** The completed lines, as indices into `bingoLines(size, free)`. */
   lines: number[];
   score: number;
   maxCombo: number;
   complete: boolean;
+  /** Squares per side. */
+  size: number;
+  /** Whether the center is a FREE square. */
+  free: boolean;
 }
 
 export interface BingoEvent {
-  /** Lines (indices into LINES) completed by this change. */
+  /** Lines (indices into `bingoLines(size, free)`, which is LINES for 4×4) completed by this change. */
   newLines: number[];
   totalLines: number;
   score: number;
@@ -37,14 +41,27 @@ export interface PerfectEvent {
 }
 
 export interface PackingBingoOptions {
-  /** Exactly 16 items, row by row. Defaults to a Japanese school-trip list. */
+  /**
+   * One item per square, row by row (skipping the FREE square). Defaults to a Japanese
+   * school-trip list of 16. The count sets the size unless `size` is given: 9 → 3×3, 16 → 4×4.
+   */
   items?: readonly BingoItem[];
+  /**
+   * Squares per side, 2 to 10. By default it follows the number of items. Without `items`,
+   * a 2×2 or 3×3 card uses the first default items.
+   */
+  size?: number;
+  /**
+   * Make the center a FREE square (odd sizes only): it is always stamped and counts toward the
+   * lines through it. `items`, `checked` and `defaultChecked` then have size² − 1 entries.
+   */
+  free?: boolean;
   /** Overrides for UI text. Start from `ja` (default) or `en`. */
   messages?: Partial<Messages>;
   title?: string;
   tag?: string;
   subtitle?: string;
-  /** Initial state (16 booleans), used when nothing is saved under `storageKey`. */
+  /** Initial state (one boolean per item), used when nothing is saved under `storageKey`. */
   defaultChecked?: readonly boolean[];
   /**
    * When true, taps don't change the card by themselves: they call `onChange` with the
@@ -83,7 +100,6 @@ export interface PackingBingoInstance {
   destroy(): void;
 }
 
-const DEMO_START = [0, 1, 2, 3, 5, 10];
 const CONFETTI = ["#E8473B", "#2F6FED", "#1FA971", "#FFFDF6", "#2A1F14", "#FF9F1C"];
 const COMBO_COLORS = ["#FF9F1C", "#1FA971", "#2F6FED", "#9B5DE5", "#E8473B"];
 const COMBO_MS = 2500;
@@ -93,9 +109,6 @@ type WithUserActivation = Navigator & { userActivation?: { hasBeenActive: boolea
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-
-const normalize = (v: readonly boolean[] | undefined) => Array.from({ length: 16 }, (_, i) => !!v?.[i]);
-const demoStart = () => Array.from({ length: 16 }, (_, i) => DEMO_START.includes(i));
 
 function readStore(key: string): string | null {
   try {
@@ -128,24 +141,31 @@ function ensureAssets(fonts: boolean) {
   }
 }
 
-function template(items: readonly BingoItem[], M: Messages, demo: boolean) {
-  const tiles = items
-    .map(
-      (it, i) =>
-        `<label class="pkb-tile" data-reach="${esc(M.reachBadge)}" style="--pkb-gd:${((i >> 2) + (i & 3)) * 0.12}s">` +
-        `<input type="checkbox"><span class="pkb-emo" aria-hidden="true">${esc(it.emoji)}</span>` +
-        `<span class="pkb-lbl">${esc(it.label).replace(/・/g, "・<wbr>")}</span>` +
-        `<span class="pkb-stamp" aria-hidden="true">${esc(M.stamp)}</span></label>`,
-    )
-    .join("");
+function template(L: Layout, M: Messages, demo: boolean) {
+  const n = L.size;
+  const tiles = Array.from({ length: n * n }, (_, c) => {
+    // The shine on completed lines sweeps from the top left corner (0.72 s to the far corner).
+    const gd = `--pkb-gd:${+(((Math.floor(c / n) + (c % n)) * 0.36) / Math.max(1, n - 1)).toFixed(3)}s`;
+    if (c === L.center)
+      return `<div class="pkb-tile pkb-free pkb-on" style="${gd}"><span class="pkb-stamp">${esc(M.free)}</span></div>`;
+    const it = L.items[L.itemCell.indexOf(c)];
+    return (
+      `<label class="pkb-tile" data-reach="${esc(M.reachBadge)}" style="${gd}">` +
+      `<input type="checkbox"><span class="pkb-emo" aria-hidden="true">${esc(it.emoji)}</span>` +
+      `<span class="pkb-lbl">${esc(it.label).replace(/・/g, "・<wbr>")}</span>` +
+      `<span class="pkb-stamp" aria-hidden="true">${esc(M.stamp)}</span></label>`
+    );
+  }).join("");
+  // Type and spacing follow the tile size: 1 at 4×4, larger on 3×3, smaller from 5×5.
+  const scale = `--pk-n:${n};--pk-s:${+Math.min(1.35, 4 / n).toFixed(3)};--pk-d:${+Math.min(1, 4 / n).toFixed(3)}`;
   const demoBar = demo
     ? `<div class="pkb-demo"><span>${esc(M.demoLabel)}</span><button type="button" data-r="dB">${esc(M.demoBingo)}</button>` +
       `<button type="button" data-r="dP">${esc(M.demoPerfect)}</button><button type="button" data-r="dR">${esc(M.demoRestore)}</button></div>`
     : "";
-  return `<div class="pkb"><div class="pkb-board">
+  return `<div class="pkb" style="${scale}"><div class="pkb-board">
 <div class="pkb-head"><div>
 <div class="pkb-tags"><span class="pkb-kicker" data-r="kick">${esc(M.tag)}</span><button type="button" class="pkb-snd" data-r="snd"></button></div>
-<h2 class="pkb-title">${esc(M.title)}</h2><p class="pkb-sub">${esc(M.subtitle)}</p></div>
+<h2 class="pkb-title">${esc(M.title)}</h2>${M.subtitle ? `<p class="pkb-sub">${esc(M.subtitle)}</p>` : ""}</div>
 <div class="pkb-side"><div class="pkb-score">
 <div class="pkb-pill"><small>${esc(M.packed)}</small><b data-r="cnt"></b></div>
 <div class="pkb-pill" data-r="bp"><small>${esc(M.bingo)}</small><b data-r="bng"></b></div>
@@ -156,11 +176,13 @@ function template(items: readonly BingoItem[], M: Messages, demo: boolean) {
 <div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><button type="button" class="pkb-reset" data-r="reset">${esc(M.reset)}</button></div>
 <div class="pkb-flash" data-r="flash"></div>
 <div class="pkb-perfect" data-r="perfect"><div class="pkb-card" role="dialog" aria-label="${esc(M.perfectTitle)}">
-<div class="pkb-medal">${esc(M.perfectStamp)}</div><h3 class="pkb-ptitle">${esc(M.perfectTitle)}</h3><p class="pkb-pbody">${esc(M.perfectBody)}</p>
+<div class="pkb-medal">${esc(M.perfectStamp)}</div><h3 class="pkb-ptitle">${esc(M.perfectTitle)}</h3><p class="pkb-pbody" data-r="pbody">${esc(perfectText(M, L.items.length))}</p>
 <div class="pkb-stats"><div><small>${esc(M.statScore)}</small><b data-r="sScore">0</b></div><div><small>${esc(M.statCombo)}</small><b data-r="sCombo">×0</b></div><div><small>${esc(M.statLines)}</small><b data-r="sBingo">0</b></div></div>
 <button type="button" class="pkb-close" data-r="close">${esc(M.close)}</button></div></div>
 <canvas class="pkb-fx"></canvas></div>${demoBar}</div>`;
 }
+
+const perfectText = (M: Messages, total: number) => (typeof M.perfectBody === "function" ? M.perfectBody(total) : M.perfectBody);
 
 /** A callback to run once a state change has finished rendering. */
 type Pending = () => void;
@@ -173,8 +195,18 @@ interface Particle {
 
 /** Render a packing bingo card into `container`. Call only in the browser. */
 export function createPackingBingo(container: HTMLElement, options: PackingBingoOptions = {}): PackingBingoInstance {
-  const items = options.items ?? DEFAULT_ITEMS;
-  if (items.length !== 16) throw new Error(`[packing-bingo] "items" must have exactly 16 entries (got ${items.length}).`);
+  const L = resolveLayout(options);
+  const { items, lines, cellLines } = L;
+  const n = L.size, N = items.length;
+  const normalize = (v: readonly boolean[] | undefined) => Array.from({ length: N }, (_, i) => !!v?.[i]);
+  // Demo start: the top row, plus the diagonal from the top left except its last square (a reach).
+  const demoCells = [...cellLines[0], ...cellLines[2 * n].slice(1, -1)];
+  const demoItems = new Set(L.itemCell.flatMap((c, i) => (demoCells.includes(c) ? [i] : [])));
+  const demoStart = () => Array.from({ length: N }, (_, i) => demoItems.has(i));
+  /** Row + column of a cell: how far it is from the top left corner. */
+  const far = (c: number) => Math.floor(c / n) + (c % n);
+  /** Spacing scale (1 up to 4×4, smaller above), as in the --pk-d CSS variable. */
+  const dScale = Math.min(1, 4 / n);
   const M: Messages = { ...ja, ...options.messages };
   if (options.title != null) M.title = options.title;
   if (options.tag != null) M.tag = options.tag;
@@ -201,7 +233,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   let gen = 0;
 
   ensureAssets(options.fonts !== false);
-  container.innerHTML = template(items, M, demo);
+  container.innerHTML = template(L, M, demo);
   const $ = <T extends Element = HTMLElement>(r: string) => {
     const el = container.querySelector(`[data-r="${r}"]`);
     if (!el) throw new Error(`[packing-bingo] internal: missing element "${r}"`);
@@ -213,7 +245,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const svg = container.querySelector(".pkb-lines") as SVGSVGElement;
   const cv = container.querySelector(".pkb-fx") as HTMLCanvasElement;
   const ctx = cv.getContext("2d");
-  const tiles = Array.from(grid.children) as HTMLElement[];
+  /** Every square in grid order, including the FREE one. */
+  const cellTiles = Array.from(grid.children) as HTMLElement[];
+  /** The square of each item. */
+  const tiles = L.itemCell.map((c) => cellTiles[c]);
+  const freeTile = L.center >= 0 ? cellTiles[L.center] : null;
   const ins = tiles.map((t) => t.querySelector("input") as HTMLInputElement);
   const kick = $("kick"), snd = $<HTMLButtonElement>("snd"), perfectEl = $("perfect");
 
@@ -359,11 +395,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     void (el as HTMLElement).offsetWidth;
     el.classList.add(cls);
   };
-  const hop = (i: number, d: number) => {
+  const hop = (t: HTMLElement, d: number) => {
     if (calm) return;
-    tiles[i].classList.remove("pkb-squash");
-    tiles[i].style.setProperty("--pkb-d", d + "ms");
-    replay(tiles[i], "pkb-hop");
+    t.classList.remove("pkb-squash");
+    t.style.setProperty("--pkb-d", d + "ms");
+    replay(t, "pkb-hop");
   };
   grid.addEventListener("animationend", (e) => {
     const t = e.target as HTMLElement;
@@ -414,8 +450,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     if (!calm) replay($("sp"), "pkb-bump");
   }
   /** Show points that are already in `score`: a popup plus the header count-up. */
-  const showGain = (n: number, x: number, y: number, cls = "pt") => {
-    floatText(`+${n}`, x, y, cls);
+  const showGain = (pts: number, x: number, y: number, cls = "pt") => {
+    floatText(`+${pts}`, x, y, cls);
     countScore();
   };
   function countUp(el: HTMLElement, a: number, b: number, d: number, fmt: (v: number) => string, ticks = false) {
@@ -435,16 +471,15 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     };
     st(t0);
   }
-  const ctr = (i: number) => {
-    const t = tiles[i];
+  const ctr = (t: HTMLElement) => {
     return { x: t.offsetLeft + t.offsetWidth / 2, y: t.offsetTop + t.offsetHeight / 2 };
   };
   function drawLines(fresh: number[] = []) {
     svg.setAttribute("viewBox", `0 0 ${gw.clientWidth} ${gw.clientHeight}`);
     svg.innerHTML = cur
       .map((k) => {
-        const a = ctr(LINES[k][0]), b = ctr(LINES[k][3]);
-        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, ex = (dx / d) * 26, ey = (dy / d) * 26;
+        const a = ctr(cellTiles[cellLines[k][0]]), b = ctr(cellTiles[cellLines[k][n - 1]]);
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, r = 26 * dScale, ex = (dx / d) * r, ey = (dy / d) * r;
         const at = `x1="${a.x - ex}" y1="${a.y - ey}" x2="${b.x + ex}" y2="${b.y + ey}" pathLength="1"`;
         return `<g${fresh.includes(k) ? ' class="pkb-draw"' : ""}><line class="pkb-u" ${at}/><line class="pkb-o" ${at}/></g>`;
       })
@@ -496,29 +531,30 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   }
 
   function bingo(fresh: number[], pts: number) {
-    const n = fresh.length;
-    const seq = [...new Set(fresh.flatMap((k) => LINES[k]))];
+    const nl = fresh.length;
+    // The squares of the new lines in line order, including the FREE square.
+    const seq = [...new Set(fresh.flatMap((k) => cellLines[k]))].map((c) => cellTiles[c]);
     const step = Math.min(70, 300 / seq.length);
-    seq.forEach((i, j) =>
+    seq.forEach((t, j) =>
       later(() => {
-        hop(i, 0);
-        const p = rel(tiles[i]);
+        hop(t, 0);
+        const p = rel(t);
         burst(p.x, p.y, 14, { speed: 5, g: 0.15, life: 30, size: 0.7, star: 0.8 });
         sfx.note(j + 3);
       }, j * step),
     );
     later(() => {
-      $("bT").textContent = n >= 3 ? M.bannerTriple : n === 2 ? M.bannerDouble : M.bannerSingle;
-      $("bS").textContent = n > 1 ? M.bannerMulti(n) : M.bannerNth(cur.length);
+      $("bT").textContent = nl >= 3 ? M.bannerTriple : nl === 2 ? M.bannerDouble : M.bannerSingle;
+      $("bS").textContent = nl > 1 ? M.bannerMulti(nl) : M.bannerNth(cur.length);
       replay($("banner"), "pkb-show");
       if (!calm) {
         replay($("flash"), "pkb-go");
         replay(board, "pkb-punch");
       }
       const c = rel(gw);
-      burst(c.x, c.y, n > 1 ? 180 : 110, { speed: n > 1 ? 16 : 13, star: 0.3 });
-      sfx.bingo(n);
-      buzz(n > 1 ? [40, 60, 40, 60, 90] : [40, 60, 40]);
+      burst(c.x, c.y, nl > 1 ? 180 : 110, { speed: nl > 1 ? 16 : 13, star: 0.3 });
+      sfx.bingo(nl);
+      buzz(nl > 1 ? [40, 60, 40, 60, 90] : [40, 60, 40]);
       if (pts) later(() => showGain(pts, c.x, c.y + 105, "big"), 350); // points are already in `score`
     }, seq.length * step + 60);
   }
@@ -527,9 +563,10 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     const bonus = gotP ? 0 : 1000;
     gotP = true;
     score += bonus;
-    tiles.forEach((_, i) => hop(i, ((i >> 2) + (i & 3)) * 60));
+    cellTiles.forEach((t, c) => hop(t, (far(c) * 180) / Math.max(1, n - 1)));
     sfx.perfect();
     if (!calm) replay($("flash"), "pkb-go");
+    $("pbody").textContent = perfectText(M, N); // a function in `messages` may have changed since the build
     $("sScore").textContent = "0";
     $("sCombo").textContent = "×0";
     $("sBingo").textContent = "0";
@@ -585,28 +622,29 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   function render(src: number | null, quiet: boolean): Pending[] {
     const events: Pending[] = [];
     const on = checked, c = on.filter(Boolean).length;
-    cur = LINES.flatMap((l, k) => (l.every((i) => on[i]) ? [k] : []));
+    cur = lines.flatMap((l, k) => (l.every((i) => on[i]) ? [k] : []));
     const fresh = cur.filter((k) => !prevLines.has(k));
     // A completed line was undone: whatever was still queued to celebrate it no longer applies.
     if ([...prevLines].some((k) => !cur.includes(k))) {
       cancelFx();
-      if (c < 16) perfectEl.classList.remove("pkb-show");
+      if (c < N) perfectEl.classList.remove("pkb-show");
     }
-    const hit = new Set(cur.flatMap((k) => LINES[k]));
+    const hit = new Set(cur.flatMap((k) => cellLines[k])); // cells, so the FREE square lights up too
     const reach = new Set<number>();
-    for (const l of LINES) {
+    for (const l of lines) {
       const m = l.filter((i) => !on[i]);
       if (m.length === 1) reach.add(m[0]);
     }
     tiles.forEach((t, i) => {
       t.classList.toggle("pkb-on", on[i]);
-      t.classList.toggle("pkb-line", hit.has(i));
+      t.classList.toggle("pkb-line", hit.has(L.itemCell[i]));
       t.classList.toggle("pkb-reach", reach.has(i));
     });
-    board.classList.toggle("pkb-all", c === 16);
-    kick.classList.toggle("pkb-gold", c === 16);
-    kick.textContent = c === 16 ? M.perfectTag : M.tag;
-    $("cnt").textContent = `${c}/16`;
+    freeTile?.classList.toggle("pkb-line", hit.has(L.center));
+    board.classList.toggle("pkb-all", c === N);
+    kick.classList.toggle("pkb-gold", c === N);
+    kick.textContent = c === N ? M.perfectTag : M.tag;
+    $("cnt").textContent = `${c}/${N}`;
     $("bng").textContent = String(cur.length);
     const bp = $("bp");
     if (cur.length > lastN) {
@@ -623,7 +661,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     score += linePts; // earned now; the popup for it is only shown later
     if (quiet) {
       if (linePts) countScore();
-    } else if (c === 16 && !prevAll) perfect(events);
+    } else if (c === N && !prevAll) perfect(events);
     else if (fresh.length) {
       bingo(fresh, linePts);
       const e = { newLines: fresh, totalLines: cur.length, score };
@@ -634,10 +672,10 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     }
     prevLines = new Set(cur);
     prevReach = reach;
-    prevAll = c === 16;
+    prevAll = c === N;
     const labels = [...reach].map((i) => items[i].label);
     $("msg").textContent =
-      c === 16 ? M.statusDone : labels.length ? M.statusReach(labels) : cur.length ? M.statusLines(cur.length, 16 - c) : M.statusStart(16 - c);
+      c === N ? M.statusDone : labels.length ? M.statusReach(labels) : cur.length ? M.statusLines(cur.length, N - c) : M.statusStart(N - c);
     // Callbacks run only after the state above is consistent (they may reset or destroy the card).
     return events;
   }
@@ -672,7 +710,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     got.clear();
     gotL.clear();
     checked.forEach((v, i) => v && got.add(i));
-    LINES.forEach((l, k) => l.every((i) => checked[i]) && gotL.add(k));
+    lines.forEach((l, k) => l.every((i) => checked[i]) && gotL.add(k));
     prevLines = new Set(gotL);
     prevReach = new Set();
     prevAll = checked.every(Boolean);
@@ -738,12 +776,13 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       }
     };
     $("dB").addEventListener("click", () => {
-      const open = () => LINES.map((l) => l.filter((i) => !checked[i])).filter((m) => m.length).sort((a, b) => a.length - b.length)[0] ?? [];
-      const pick = checked.every(Boolean) ? [...LINES[0]] : open();
+      const open = () => lines.map((l) => l.filter((i) => !checked[i])).filter((m) => m.length).sort((a, b) => a.length - b.length)[0] ?? [];
+      const pick = checked.every(Boolean) ? [...lines[0]] : open();
       void run(pick.map((i) => ({ i, delay: 320 })));
     });
     $("dP").addEventListener("click", () => {
-      const miss = checked.every(Boolean) ? tiles.map((_, i) => i) : tiles.map((_, i) => i).filter((i) => !checked[i]);
+      const all = items.map((_, i) => i);
+      const miss = checked.every(Boolean) ? all : all.filter((i) => !checked[i]);
       void run(miss.map((i, k) => (k < miss.length - 1 ? { i, delay: 170, quiet: true } : { i, delay: 450 })));
     });
     $("dR").addEventListener("click", () => {
@@ -790,7 +829,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       if (!dead) render(null, true);
     },
     getState() {
-      return { checked: checked.slice(), lines: cur.slice(), score, maxCombo, complete: checked.every(Boolean) };
+      return { checked: checked.slice(), lines: cur.slice(), score, maxCombo, complete: checked.every(Boolean), size: n, free: L.free };
     },
     destroy() {
       if (dead) return;
