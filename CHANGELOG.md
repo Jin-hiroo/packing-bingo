@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 ### Added
 
@@ -25,7 +25,7 @@
 ### Docs
 
 - The README screenshots are retaken with the current default items and look, and the 「マスの数を変える」 section has a 5×5 + FREE screenshot.
-- The quick start places the package's own `<PackingBingo />` instead of a wrapper component named `OkinawaPackingBingo`, and then shows how to pass your own `items`. The Next.js and Vite examples pass the same 16 items to `<PackingBingo items={items} />` directly (so they keep working, and keep their saved progress, on the published 0.2.0), and nothing refers to Okinawa any more. With this release, `<PackingBingo />` without `items` shows the same list and saves under the same key.
+- The quick start places the package's own `<PackingBingo />` instead of a wrapper component named `OkinawaPackingBingo`, and then shows how to pass your own `items`. The Next.js and Vite examples pass the same 16 items to `<PackingBingo items={items} />` directly, and nothing refers to Okinawa any more. `<PackingBingo />` without `items` shows the same list and saves under the same key as the old wrapper, so cards built from the old quick start keep their progress.
 - The README quick start, the demo site and the example projects use the same 16 items as the new default.
 - The README explains how to mark where a long label without `・` may wrap.
 - A demo site on GitHub Pages (https://jin-hiroo.github.io/packing-bingo/), built from `site/` by a workflow on every push to `main`. Its embed code is taken from the README's quick start.
