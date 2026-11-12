@@ -4,8 +4,8 @@
 
 ### Changed
 
-- The card no longer loads its fonts from Google Fonts, so the package makes no network requests and contains no external URLs (Socket flagged the font URL as "URL strings"). To keep the look, add one line to the page's `<head>`: `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />`. Without it the card uses Hiragino Maru Gothic on Apple devices and `--pkb-font-fallback` elsewhere. Sites with a Content Security Policy no longer need to allow Google's font hosts unless they add that line.
-- `fonts` is deprecated and ignored. Code that passes `fonts={false}` still compiles and behaves as before.
+- The card no longer loads its fonts from Google Fonts, so it makes no network requests and its code contains no external URLs (Socket flagged the font URL as "URL strings"). To keep the look, add one line to the page's `<head>`: `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />`. Without it, body text uses Hiragino Maru Gothic on Apple devices, and headings (and body text elsewhere) use `--pkb-font-fallback`. Sites with a Content Security Policy no longer need to allow Google's font hosts unless they add that line.
+- `fonts` is deprecated and ignored. Code that passes `fonts={false}` still compiles and behaves as before, and changing it no longer rebuilds a React card.
 
 ### Docs
 
