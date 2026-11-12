@@ -46,7 +46,7 @@ _スマホでの表示。左から、1列そろって次の列にリーチがか
 | サイズ | 約14 kB（minify・gzip後、CSS込み、Reactは含まず） |
 | サーバー側での表示 | `"use client"` 付きで配布しています。サーバー側では空の `<div>` を出し、ブラウザでカードを作ります |
 | 見た目 | `<head>` に `<style>` を1つ追加します。クラス名はすべて `pkb-` で始まります。CSS変数で配色を変えられ、置いた場所の幅に合わせて自動で大きさが変わります |
-| 通信 | Google Fontsからフォントを2つ読み込みます（`fonts={false}` で止められます） |
+| 通信 | しません。見出しなどのフォントは、使うときにページで読み込みます（[フォント](#フォント)） |
 | 保存 | localStorageだけ。進み具合と、音のオン・オフの設定 |
 | ブラウザ | Chrome・Edge 105以上、Safari 16以上、Firefox 121以上。今のところChromiumでしか試していません（[詳しく](#対応ブラウザと確認済みの範囲)） |
 
@@ -87,6 +87,12 @@ export default function PackingPage() {
 }
 ```
 
+デモサイトと同じフォントにするなら、ページの `<head>` に次の1行を足します。Next.jsなら `app/layout.tsx` の `<html>` の中に `<head>` を書いてそこへ、Viteなら `index.html` の `<head>` へ入れます。足さなくても動き、そのときは端末のフォントで表示されます（[フォント](#フォント)）。
+
+```html
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
+```
+
 カードは置いた場所の幅いっぱい（最大720 px）に広がり、狭い場所ではスマホ向けの配置に自動で切り替わります。
 
 Next.jsのServer Componentのページからでも、そのまま使えます。ただし、`onBingo` などの関数（コールバック）はServer Componentから渡せず、「Event handlers cannot be passed to Client Component props」というエラーでビルドが止まります。コールバックを使うときは、1行目に `"use client";` を書いたファイル（client component）の中に `<PackingBingo>` を置いてください。
@@ -125,9 +131,10 @@ const items: BingoItem[] = [
 
 ### Reactを使っていないページに置く場合
 
-HTMLの好きな場所に、次をそのまま貼り付けます。インストールは要りません。
+HTMLの好きな場所に、次をそのまま貼り付けます。インストールは要りません。1行目はフォントの読み込みで、要らなければ消しても動きます。
 
 ```html
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
 <div id="packing-bingo"></div>
 <script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.3/dist/packing-bingo.global.js"></script>
 <script>
@@ -330,12 +337,12 @@ function PackingPage() {
 | `onBingo` | `(event: BingoEvent) => void` | なし | タップで1列以上そろった |
 | `onPerfect` | `(event: PerfectEvent) => void` | なし | タップでカード全体がそろった |
 | `sound` | `boolean` | `true` | 音の最初の設定。ユーザーが🔊ボタンで選ぶまで使われます |
-| `fonts` | `boolean` | `true` | Dela Gothic OneとM PLUS Rounded 1cをGoogle Fontsから読み込む |
+| `fonts` | `boolean` | なし | 非推奨。0.4.0からは何もしません。フォントはページで読み込みます（[フォント](#フォント)） |
 | `demo` | `boolean` | `false` | デモ用のボタンを出します。保存された進み具合も `defaultChecked` もなければ、一番上の列と、左上からのナナメの途中までが埋まった状態（4×4なら6マス）から始めます。`storageKey` を指定しない限り保存しません |
 | `className`・`style` | | なし | 外側の `<div>` に付きます |
 | `ref` | `Ref<PackingBingoHandle>` | なし | [ref](#ref) を見てください |
 
-propsは中身で比べるので、配列やオブジェクトをその場で書いても構いません。`items`・`size`・`free`・`title`・`tag`・`subtitle`・`storageKey`・`sound`・`fonts`・`demo`、または `messages` の文字列が変わると、カードを作り直します。保存先のキーが変わらなければ、チェックはそのまま残ります。キーが変わったとき（`items` を変えて自動のキーが変わったときも含む）は、新しいキーに保存された進み具合を読み込みます。得点は[得点のルール](#得点のルール)のとおり計算し直します。`messages` の関数はpropsやstateを使っても構いません。`messages` が変わると、作り直さずに下の1行だけを描き直します。
+propsは中身で比べるので、配列やオブジェクトをその場で書いても構いません。`items`・`size`・`free`・`title`・`tag`・`subtitle`・`storageKey`・`sound`・`demo`、または `messages` の文字列が変わると、カードを作り直します。保存先のキーが変わらなければ、チェックはそのまま残ります。キーが変わったとき（`items` を変えて自動のキーが変わったときも含む）は、新しいキーに保存された進み具合を読み込みます。得点は[得点のルール](#得点のルール)のとおり計算し直します。`messages` の関数はpropsやstateを使っても構いません。`messages` が変わると、作り直さずに下の1行だけを描き直します。
 
 ### イベント
 
@@ -403,17 +410,25 @@ interface PackingBingoState {
 
 ### ページに追加されるもの
 
-最初に表示したとき、`<head>` に `<style id="pkb-styles">` を追加します。これはすべてのカードで共有し、カードを外したあとも残ります。`fonts={false}` でなければ、Google Fonts用の `<link id="pkb-fonts">` も追加します。CSSはすべて `.pkb` の中だけに効き、クラス名とアニメーション名はすべて `pkb-` で始まるので、ページのほかの部分には影響しません。
+最初に表示したとき、`<head>` に `<style id="pkb-styles">` を追加します。これはすべてのカードで共有し、カードを外したあとも残ります。ほかには何も追加せず、外部にも何も取りに行きません。CSSはすべて `.pkb` の中だけに効き、クラス名とアニメーション名はすべて `pkb-` で始まるので、ページのほかの部分には影響しません。
 
 カードが描くもの（紙吹雪、BINGO!の文字、フィナーレの画面）は、すべてカード自身の枠の中に収まります。`position: fixed` を使ったり `<body>` に要素を足したりはしません。カードは独立した重なり順（stacking context）を持つので、上部に固定したヘッダーの上に描かれることもありません。
 
 ### CSP（Content Security Policy）
 
-追加する `<style>` と一部の `style` 属性のために、`style-src 'unsafe-inline'` が必要です。フォントを読み込む場合は、`style-src` に `https://fonts.googleapis.com`、`font-src` に `https://fonts.gstatic.com` も許可してください。
+追加する `<style>` と一部の `style` 属性のために、`style-src 'unsafe-inline'` が必要です。[フォント](#フォント)をGoogle Fontsから読み込む場合は、`style-src` に `https://fonts.googleapis.com`、`font-src` に `https://fonts.gstatic.com` も許可してください。
 
 ### フォント
 
-Dela Gothic OneとM PLUS Rounded 1cを使います。`fonts={false}` にするとGoogleには何も取りに行きません。サイトで同じ名前のフォントを読み込んでいれば（自分のサーバーに置いている場合など）それを使い、なければ `--pkb-font-fallback` のフォントを使います。
+見出しなどにDela Gothic One、本文にM PLUS Rounded 1cを使います。カードはフォントを読み込まないので、使うときはページで読み込みます。Google Fontsからなら、`<head>` に次の1行です。
+
+```html
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
+```
+
+自分のサーバーに置いたフォントでも、同じ名前（`font-family`）で読み込めば使われます。読み込まなければ、本文はヒラギノ丸ゴシック（Appleの端末）、見出しなどとそれ以外の端末の本文は `--pkb-font-fallback` のフォント（既定は `sans-serif`）になります。
+
+0.3.0までは、カードがGoogle Fontsの `<link>` を自動で追加していました。0.4.0からは追加せず、`fonts` も何もしません。
 
 ### 音と振動
 
@@ -488,7 +503,7 @@ npm run typecheck
 
 ## English
 
-Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. It has no runtime dependencies and is safe to render on the server (it ships with `"use client"`).
+Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. It has no runtime dependencies, makes no network requests, and is safe to render on the server (it ships with `"use client"`). It does not load its web fonts either: add the Google Fonts `<link>` from the quick start to the page's `<head>` to get them.
 
 ```sh
 npm install packing-bingo
@@ -506,4 +521,4 @@ Try it on the [demo site](https://jin-hiroo.github.io/packing-bingo/); runnable 
 
 [MIT](LICENSE) © 2026 Jin-hiroo.
 
-Dela Gothic OneとM PLUS Rounded 1cのフォントはGoogle Fontsから読み込んでおり、SIL Open Font Licenseで提供されています。このリポジトリには含まれていません。
+Dela Gothic OneとM PLUS Rounded 1cは、SIL Open Font Licenseで提供されているフォントです。このパッケージにもリポジトリにも含まれていません。デモサイトと単体のページは、Google Fontsから読み込んでいます。

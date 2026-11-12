@@ -3,7 +3,7 @@ import { bingoLines, resolveLayout, type Layout } from "./layout";
 import { en, ja, type Messages } from "./messages";
 import { createSound } from "./sound";
 import { resolveStorageKey } from "./storage-key";
-import { CSS, FONT_URL } from "./styles";
+import { CSS } from "./styles";
 
 export { DEFAULT_ITEMS, ja, en, bingoLines };
 export type { BingoItem, Messages };
@@ -76,7 +76,10 @@ export interface PackingBingoOptions {
   storageKey?: string | null;
   /** Start with sound on (default) or off. A choice made with the sound button is remembered. */
   sound?: boolean;
-  /** Load the display fonts from Google Fonts (default true). */
+  /**
+   * @deprecated Ignored since 0.4.0: the card no longer loads fonts. To get Dela Gothic One and
+   * M PLUS Rounded 1c, load them on the page (see the README's フォント section).
+   */
   fonts?: boolean;
   /** Pre-fill a few items and show demo buttons. */
   demo?: boolean;
@@ -125,20 +128,12 @@ function writeStore(key: string, value: string) {
   }
 }
 
-function ensureAssets(fonts: boolean) {
-  if (!document.getElementById("pkb-styles")) {
-    const s = document.createElement("style");
-    s.id = "pkb-styles";
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
-  if (fonts && !document.getElementById("pkb-fonts")) {
-    const l = document.createElement("link");
-    l.id = "pkb-fonts";
-    l.rel = "stylesheet";
-    l.href = FONT_URL;
-    document.head.appendChild(l);
-  }
+function ensureStyles() {
+  if (document.getElementById("pkb-styles")) return;
+  const s = document.createElement("style");
+  s.id = "pkb-styles";
+  s.textContent = CSS;
+  document.head.appendChild(s);
 }
 
 function template(L: Layout, M: Messages, demo: boolean) {
@@ -232,7 +227,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   // Long-running loops (count-ups, demo runs) stop when it changes.
   let gen = 0;
 
-  ensureAssets(options.fonts !== false);
+  ensureStyles();
   container.innerHTML = template(L, M, demo);
   const $ = <T extends Element = HTMLElement>(r: string) => {
     const el = container.querySelector(`[data-r="${r}"]`);
