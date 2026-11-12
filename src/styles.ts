@@ -4,9 +4,8 @@
 // Theme from outside with --pkb-sun, --pkb-ink, --pkb-paper, --pkb-red, --pkb-mint.
 // The card sets --pk-n (squares per side), --pk-s (type scale) and --pk-d (spacing scale) on
 // .pkb; both scales are 1 on a 4×4 card, so the sizes below are the 4×4 ones.
-
-export const FONT_URL =
-  "https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap";
+// The fonts (Dela Gothic One, M PLUS Rounded 1c) are used if the page loads them; the package
+// itself never fetches anything, so it carries no external URLs.
 
 export const CSS = `
 .pkb{--pk-sun:var(--pkb-sun,#FFD54F);--pk-ink:var(--pkb-ink,#2A1F14);--pk-paper:var(--pkb-paper,#FFFDF6);--pk-red:var(--pkb-red,#E8473B);--pk-mint:var(--pkb-mint,#BDEBD2);--pk-display:"Dela Gothic One",var(--pkb-font-fallback,sans-serif);--pk-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",var(--pkb-font-fallback,sans-serif);--pk-n:4;--pk-s:1;--pk-d:1;container-type:inline-size;isolation:isolate;width:100%}

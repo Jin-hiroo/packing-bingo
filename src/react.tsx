@@ -32,7 +32,8 @@ type MessageKey = keyof Messages;
  * builds the card after mount, so it is safe in Next.js (it ships with "use client").
  */
 export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(function PackingBingo(props, ref) {
-  const { checked, defaultChecked, className, style, onChange, onBingo, onPerfect, messages, ...config } = props;
+  // `fonts` is deprecated and ignored; leaving it out keeps it from forcing a rebuild.
+  const { checked, defaultChecked, className, style, onChange, onBingo, onPerfect, messages, fonts: _fonts, ...config } = props;
   const host = useRef<HTMLDivElement>(null);
   const inst = useRef<PackingBingoInstance | null>(null);
   const callbacks = useRef({ onChange, onBingo, onPerfect });

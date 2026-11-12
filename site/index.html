@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>🎒</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="pkb-fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
 :root{--ink:#2A1F14;--paper:#FFFDF6;--sun:#FFD54F;--red:#E8473B;--red-strong:#B83224;--mint:#BDEBD2;--muted:#6B5D4D;--line:#EADFC8;color-scheme:light}
 *{box-sizing:border-box}
@@ -151,6 +151,8 @@ footer{padding:28px 0 48px;color:var(--muted);font-size:14px}
       <div class="code"><button class="copy" type="button">コピー</button><pre><code>{{usage}}</code></pre></div>
       <p>Next.js（App Router）で専用のページにするなら、<code>app/packing/page.tsx</code> に：</p>
       <div class="code"><button class="copy" type="button">コピー</button><pre><code>{{nextPage}}</code></pre></div>
+      <p>このページと同じフォントにするなら、ページの <code>&lt;head&gt;</code> にこの1行を足します（Next.jsなら <code>app/layout.tsx</code>、Viteなら <code>index.html</code>）。なくても動き、端末のフォントで表示されます。</p>
+      <div class="code"><button class="copy" type="button">コピー</button><pre><code>{{fonts}}</code></pre></div>
 
       <h3><span class="step">3</span>持ち物を変える</h3>
       <p><code>items</code> に、左上から横に1行ずつ並べて渡します。下のリストを書き換えて使ってください。</p>

@@ -18,6 +18,7 @@ const code = {
   install: pick("install", (b) => b.lang === "sh" && b.code === "npm install packing-bingo"),
   usage: pick("usage", (b) => b.lang === "tsx" && b.code.endsWith("// JSXの中の、表示したい場所に\n<PackingBingo />")),
   nextPage: pick("nextPage", (b) => b.lang === "tsx" && b.code.includes("export default function PackingPage")),
+  fonts: pick("fonts", (b) => b.lang === "html" && b.code.startsWith('<link rel="stylesheet" href="https://fonts.googleapis.com/') && !b.code.includes("<script")),
   items: pick("items", (b) => b.lang === "tsx" && b.code.endsWith("// JSXの中の、表示したい場所に\n<PackingBingo items={items} />")),
   html: pick("html", (b) => b.lang === "html" && b.code.includes("cdn.jsdelivr.net/npm/packing-bingo")),
 };
