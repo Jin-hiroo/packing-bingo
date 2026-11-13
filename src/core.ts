@@ -2,6 +2,8 @@ import { DEFAULT_ITEMS, type BingoItem } from "./items";
 import { bingoLines, resolveLayout, type Layout } from "./layout";
 import { en, ja, type Messages } from "./messages";
 import { createSound } from "./sound";
+import { createHaptics, type HapticMoment } from "./haptics";
+import { PERFECT_FIREWORKS, PERFECT_REVEAL_MS, PERFECT_STAMP_BEAT, PERFECT_STAMP_DELAY_MS } from "./celebration";
 import { resolveStorageKey } from "./storage-key";
 import { CSS } from "./styles";
 
@@ -93,7 +95,7 @@ export interface PackingBingoOptions {
    */
   defaultOrder?: readonly number[];
   /**
-   * Buzz on phones (default true): a short buzz on each tap and longer patterns for a bingo, a
+   * Buzz on phones (default true): escalating combo taps and distinct patterns for a reach, a bingo, a
    * perfect card and a shuffle where the Vibration API exists (Android), and the system tap
    * haptic on iPhone (iOS 18 and later), which only follows a real tap.
    */
@@ -134,10 +136,10 @@ const CONFETTI = ["#E8473B", "#2F6FED", "#1FA971", "#FFFDF6", "#2A1F14", "#FF9F1
 const COMBO_COLORS = ["#FF9F1C", "#1FA971", "#2F6FED", "#9B5DE5", "#E8473B"];
 const COMBO_MS = 2500;
 const MUTE_KEY = "packing-bingo-muted";
+/** Confirm once per page, shared by all cards; a reload asks again. */
+const playReady = new WeakSet<Document>();
 /** A shuffled arrangement is saved under this prefix + the card's storage key. */
 const ORDER_PREFIX = "packing-bingo-order:";
-
-type WithUserActivation = Navigator & { userActivation?: { hasBeenActive: boolean } };
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -202,6 +204,15 @@ function template(L: Layout, M: Messages, { demo, shuffle, vibrate }: Features) 
     ? `<div class="pkb-demo"><span>${esc(M.demoLabel)}</span><button type="button" data-r="dB">${esc(M.demoBingo)}</button>` +
       `<button type="button" data-r="dP">${esc(M.demoPerfect)}</button><button type="button" data-r="dR">${esc(M.demoRestore)}</button></div>`
     : "";
+  const hints = [M.soundHint ?? "", vibrate ? M.vibrationHint ?? "" : ""].filter(Boolean);
+  const playTitle = M.playTitle?.trim() || ja.playTitle || M.title;
+  const playDialog = hints.length
+    ? `<dialog class="pkb-play-dialog" data-r="play" aria-label="${esc(playTitle)}">
+<h3>${esc(playTitle)}</h3>
+${hints.map((hint) => `<p>${esc(hint)}</p>`).join("")}
+<div class="pkb-play-actions"><button type="button" class="pkb-play-start">${esc(M.playStart?.trim() || ja.playStart || M.close)}</button>
+<button type="button" class="pkb-play-skip">${esc(M.playSkip?.trim() || ja.playSkip || M.close)}</button></div></dialog>`
+    : "";
   return `<div class="pkb" style="${scale}"><div class="pkb-board">
 <div class="pkb-head"><div>
 <div class="pkb-tags"><span class="pkb-kicker" data-r="kick">${esc(M.tag)}</span><button type="button" class="pkb-snd" data-r="snd"></button></div>
@@ -221,7 +232,7 @@ function template(L: Layout, M: Messages, { demo, shuffle, vibrate }: Features) 
 <div class="pkb-medal">${esc(M.perfectStamp)}</div><h3 class="pkb-ptitle">${esc(M.perfectTitle)}</h3><p class="pkb-pbody" data-r="pbody">${esc(perfectText(M, L.items.length))}</p>
 <div class="pkb-stats"><div><small>${esc(M.statScore)}</small><b data-r="sScore">0</b></div><div><small>${esc(M.statCombo)}</small><b data-r="sCombo">×0</b></div><div><small>${esc(M.statLines)}</small><b data-r="sBingo">0</b></div></div>
 <button type="button" class="pkb-close" data-r="close">${esc(M.close)}</button></div></div>
-<canvas class="pkb-fx"></canvas></div>${demoBar}</div>`;
+<canvas class="pkb-fx"></canvas></div>${demoBar}${playDialog}</div>`;
 }
 
 const perfectText = (M: Messages, total: number) => (typeof M.perfectBody === "function" ? M.perfectBody(total) : M.perfectBody);
@@ -274,6 +285,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const demo = !!options.demo;
   const vibrate = options.vibrate !== false;
   const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const haptics = createHaptics(vibrate);
 
   // ---- lifecycle: every timer is tracked so destroy() can stop them ----
   let dead = false;
@@ -310,7 +322,25 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const tiles = L.itemCell.map((c) => cellTiles[c]);
   const freeTile = L.center >= 0 ? cellTiles[L.center] : null;
   const ins = tiles.map((t) => t.querySelector("input") as HTMLInputElement);
+  const stamps = tiles.map((t) => t.querySelector(".pkb-stamp") as HTMLElement);
   const kick = $("kick"), snd = $<HTMLButtonElement>("snd"), perfectEl = $("perfect");
+  const playDialog = container.querySelector<HTMLDialogElement>('[data-r="play"]');
+  const beforePlay = (event: MouseEvent) => {
+    if (!playDialog || playReady.has(container.ownerDocument) ||
+        typeof playDialog.showModal !== "function" ||
+        !(event.target instanceof Element) ||
+        !event.target.closest(".pkb-tile:not(.pkb-free)")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    playDialog.showModal();
+  };
+  grid.addEventListener("click", beforePlay, true);
+  playDialog?.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => playDialog.close());
+  });
+  playDialog?.addEventListener("close", () => {
+    if (!dead) playReady.add(container.ownerDocument);
+  });
 
   // ---- state ----
   let checked = normalize(undefined);
@@ -318,6 +348,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   let prevLines = new Set<number>();
   let prevReach = new Set<number>();
   let prevAll = false;
+  let perfectPending = false, restorePerfectFocus = false;
+  let perfectBeat: ((beat: readonly number[]) => void) | undefined;
   let lastN = 0;
   let score = 0, shown = 0, combo = 0, maxCombo = 0, lastT = 0, gotP = false;
   /** Items and lines (by `lineKey`) that have earned their points. */
@@ -334,6 +366,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   snd.addEventListener("click", () => {
     muted = !muted;
     writeStore(MUTE_KEY, muted ? "1" : "0");
+    if (muted) sfx.stop();
     setSnd();
     if (!muted) sfx.pop(4);
   });
@@ -463,6 +496,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   };
   grid.addEventListener("animationend", (e) => {
     const t = e.target as HTMLElement;
+    if (e.animationName === "pkb-stamp-hit") t.classList.remove("pkb-hit");
     if (t.classList.contains("pkb-tile") && (e.animationName === "pkb-hop" || e.animationName === "pkb-squash"))
       t.classList.remove(e.animationName);
   });
@@ -471,17 +505,6 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     r.className = "pkb-ring";
     t.appendChild(r);
     r.addEventListener("animationend", () => r.remove());
-  };
-  // The Vibration API (Android). iPhones don't have it; they get the switch haptic on the tap itself.
-  const buzz = (pattern: number | number[]) => {
-    if (!vibrate) return;
-    const ua = (navigator as WithUserActivation).userActivation;
-    if (ua && !ua.hasBeenActive) return; // vibration needs a prior user gesture
-    try {
-      navigator.vibrate?.(pattern);
-    } catch {
-      /* unsupported */
-    }
   };
   const floatText = (txt: string, x: number, y: number, cls: string, delay = 0, color?: string) => {
     const el = document.createElement("div");
@@ -555,25 +578,34 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   }
 
   // ---- big moments ----
-  function tapFx(i: number, on: boolean) {
+  function tapFx(i: number, on: boolean, moment: HapticMoment, fresh: number[]) {
     const p = rel(tiles[i]);
     if (!on) {
+      stamps[i].classList.remove("pkb-hit");
       combo = 0;
       $("combo").classList.remove("pkb-on");
       sfx.off();
-      buzz(8);
+      haptics.play("off");
       return;
     }
     const now = performance.now();
     combo = now - lastT < COMBO_MS ? combo + 1 : 1;
     lastT = now;
     maxCombo = Math.max(maxCombo, combo);
+    // Sound, stamp and vibration all start on this input, even on the winning square.
+    const seqLength = new Set(fresh.flatMap((k) => cellLines[k])).size;
+    const impactAt = Math.min(70 * seqLength, 300) + 60;
+    const beat = haptics.play(moment, combo, fresh.length, impactAt);
+    perfectBeat = moment === "perfect" ? beat : undefined;
+    const energy = Math.min(3, Math.floor(combo / 3));
     sfx.pop(combo - 1);
     if (!calm) {
+      tiles[i].style.setProperty("--pkb-impact", String(energy));
       replay(tiles[i], "pkb-squash");
+      replay(stamps[i], "pkb-hit");
       ring(tiles[i]);
     }
-    burst(p.x, p.y, 18, { speed: 6, g: 0.2, life: 30, size: 0.6, star: 0.5 });
+    burst(p.x, p.y, 18 + energy * 6, { speed: 6 + energy, g: 0.2, life: 30, size: 0.6, star: 0.5 });
     if (!got.has(i)) {
       got.add(i);
       score += 10 * combo;
@@ -582,9 +614,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     if (combo >= 2) {
       floatText(M.comboPop(combo), p.x, p.y + 22, "cmb", 90, COMBO_COLORS[(combo - 2) % COMBO_COLORS.length]);
       $("cmbN").textContent = M.combo(combo);
-      replay($("combo"), "pkb-on");
+      // Restart only the timer; keep the combo label visible between rapid taps.
+      $("combo").classList.add("pkb-on");
+      replay($("cbar"), "pkb-draining");
+      if (!calm) replay($("cmbN"), "pkb-bump");
     }
-    buzz(18);
   }
   $("cbar").addEventListener("animationend", () => {
     $("combo").classList.remove("pkb-on");
@@ -623,12 +657,14 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       const c = rel(gw);
       burst(c.x, c.y, nl > 1 ? 180 : 110, { speed: nl > 1 ? 16 : 13, star: 0.3 });
       sfx.bingo(nl);
-      buzz(nl > 1 ? [40, 60, 40, 60, 90] : [40, 60, 40]);
       if (pts) later(() => showGain(pts, c.x, c.y + 105, "big"), 350); // points are already in `score`
     }, seq.length * step + 60);
   }
 
   function perfect(events: Pending[]) {
+    const beat = perfectBeat;
+    perfectPending = true;
+    perfectEl.classList.remove("pkb-settled");
     const bonus = gotP ? 0 : 1000;
     gotP = true;
     score += bonus;
@@ -640,26 +676,30 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     $("sCombo").textContent = "×0";
     $("sBingo").textContent = "0";
     later(() => {
+      perfectPending = false;
       replay(perfectEl, "pkb-show");
       $("close").focus({ preventScroll: true });
       later(() => {
         if (!calm) replay(board, "pkb-shake");
         sfx.boom();
+        beat?.(PERFECT_STAMP_BEAT);
         burst(0, BH, 90, { angle: -Math.PI / 3, spread: 0.8, speed: 22, g: 0.32, star: 0.3 });
         burst(BW, BH, 90, { angle: (-Math.PI * 2) / 3, spread: 0.8, speed: 22, g: 0.32, star: 0.3 });
         rain(3500);
-        buzz([60, 80, 60, 80, 200]);
         if (bonus) floatText(M.perfectBonus(bonus), BW / 2, BH * 0.16, "big");
         countUp($("sScore"), 0, score, 1300, (v) => v.toLocaleString(), true);
         countUp($("sCombo"), 0, maxCombo, 700, (v) => "×" + v);
         countUp($("sBingo"), 0, cur.length, 700, String);
         countScore();
-      }, 720);
-      [1300, 1650, 2000, 2350, 2700].forEach((t) =>
-        later(() => firework(BW * (0.15 + Math.random() * 0.7), BH * (0.12 + Math.random() * 0.3)), t),
-      );
+      }, PERFECT_STAMP_DELAY_MS);
       later(() => emojiRain(3000), 1500);
-    }, 520);
+    }, PERFECT_REVEAL_MS);
+    PERFECT_FIREWORKS.forEach(({ at, beat: pulse }) =>
+      later(() => {
+        firework(BW * (0.15 + Math.random() * 0.7), BH * (0.12 + Math.random() * 0.3));
+        beat?.(pulse);
+      }, at),
+    );
     const e = { score, maxCombo };
     events.push(() => options.onPerfect?.(e));
   }
@@ -667,15 +707,18 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   /** Drop everything that is still scheduled to happen, and show the real score right away. */
   function cancelFx() {
     gen++;
+    perfectPending = false;
     timers.forEach((id) => clearTimeout(id));
     timers.clear();
+    haptics.stop();
+    sfx.stop();
     cancelAnimationFrame(tw);
     shown = score;
     $("sc").textContent = score.toLocaleString();
   }
 
   /** Also wipe effects already on screen (used when a new game starts). */
-  function clearVisuals() {
+  function clearVisuals(keepPerfect = false) {
     P = [];
     cancelAnimationFrame(raf);
     raf = 0;
@@ -684,7 +727,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     $("banner").classList.remove("pkb-show");
     $("flash").classList.remove("pkb-go");
     $("combo").classList.remove("pkb-on");
-    perfectEl.classList.remove("pkb-show");
+    $("cbar").classList.remove("pkb-draining");
+    cellTiles.forEach((t) => t.classList.remove("pkb-squash", "pkb-hop"));
+    stamps.forEach((s) => s.classList.remove("pkb-hit"));
+    board.classList.remove("pkb-punch", "pkb-shake");
+    if (!keepPerfect) perfectEl.classList.remove("pkb-show", "pkb-settled");
   }
 
   /** The lines (indices into `lines`) whose items are all checked. */
@@ -726,7 +773,12 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     bp.classList.toggle("pkb-hot", cur.length > 0);
     lastN = cur.length;
     drawLines(fresh);
-    if (src !== null) tapFx(src, on[src]);
+    if (src !== null) {
+      const newReach = [...reach].some((i) => !prevReach.has(i));
+      const moment = !quiet && c === N && !prevAll ? "perfect" :
+        !quiet && fresh.length ? "bingo" : !quiet && newReach ? "reach" : "tap";
+      tapFx(src, on[src], moment, fresh);
+    }
     const newL = fresh.map((k) => lineKey(lines[k])).filter((key) => !gotL.has(key));
     newL.forEach((key) => gotL.add(key));
     const linePts = 100 * newL.length * newL.length;
@@ -890,7 +942,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     } while (next.every((v, s) => v === order[s]));
     arrange(next);
     sfx.shuffle();
-    buzz([10, 40, 10, 40, 10, 40, 24]);
+    haptics.play("shuffle");
   }
 
   /** Put every item back in its own square (part of starting over). */
@@ -987,6 +1039,26 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => { fit(); drawLines(); }) : null;
   ro?.observe(board);
   ro?.observe(gw);
+  const onVisibility = () => {
+    if (!document.hidden) {
+      if (restorePerfectFocus && perfectEl.classList.contains("pkb-show")) $("close").focus({ preventScroll: true });
+      restorePerfectFocus = false;
+      return;
+    }
+    // Results are persistent content. Finish their count-up instead of discarding them.
+    const keepPerfect = perfectPending || perfectEl.classList.contains("pkb-show");
+    restorePerfectFocus = keepPerfect;
+    cancelFx();
+    clearVisuals(keepPerfect);
+    if (keepPerfect) {
+      $("sScore").textContent = score.toLocaleString();
+      $("sCombo").textContent = "×" + maxCombo;
+      $("sBingo").textContent = String(cur.length);
+      perfectEl.classList.add("pkb-show", "pkb-settled");
+    }
+    combo = 0;
+  };
+  document.addEventListener("visibilitychange", onVisibility);
 
   return {
     setChecked(next, opts = {}) {
@@ -1028,6 +1100,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     destroy() {
       if (dead) return;
       dead = true;
+      grid.removeEventListener("click", beforePlay, true);
+      if (playDialog?.open) playDialog.close();
       timers.forEach((id) => clearTimeout(id));
       timers.clear();
       clearTimeout(landing);
@@ -1035,6 +1109,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       cancelAnimationFrame(raf);
       cancelAnimationFrame(tw);
       ro?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      haptics.stop();
       sfx.close();
       container.innerHTML = "";
     },

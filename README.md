@@ -1,6 +1,6 @@
 # 持ちものビンゴ（Packing Bingo）
 
-**修学旅行の持ち物チェックリストを、4×4（3×3や5×5などにも変えられます）のビンゴにするReactコンポーネントです。持ち物をかばんに入れるたびにマスをタップしてスタンプを押し、タテ・ヨコ・ナナメがそろうと、コンボ・ファンファーレ・花火で盛り上がります。進み具合は各自のブラウザに自動で保存されます。**
+**修学旅行の持ち物チェックを、音・振動・花火で楽しく進めるビンゴにするReactコンポーネントです。**
 
 [![Demo on GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-222222?logo=githubpages&logoColor=white)](https://jin-hiroo.github.io/packing-bingo/)
 [![npm version](https://img.shields.io/npm/v/packing-bingo?logo=npm)](https://www.npmjs.com/package/packing-bingo)
@@ -9,7 +9,7 @@
 [![TypeScript types included](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white)](#api)
 [![Standalone single HTML file](https://img.shields.io/badge/standalone-single%20HTML%20file-E34F26?logo=html5&logoColor=white)](#単体のページ)
 
-[デモサイト](https://jin-hiroo.github.io/packing-bingo/) · [クイックスタート](#クイックスタート) · [デモコード](#デモ) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
+[デモサイト](https://jin-hiroo.github.io/packing-bingo/) · [v0.5.0 Release](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.5.0) · [クイックスタート](#クイックスタート) · [デモコード](#デモ) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
 
 <p align="center">
   <a href="docs/images/bingo-desktop.png"><img src="docs/images/bingo-desktop.png" alt="持ち物が並んだ4×4のビンゴカード。一番上の列に続いて、左上からのナナメの列がそろった瞬間で、大きなBINGO!の文字、「2 ライン目！」、+100の得点、紙吹雪が出ている。上の欄には8/16、2ライン、290点、2 COMBOと表示されている。" width="560"></a>
@@ -18,25 +18,25 @@
 _2コンボで2列目がそろったところ。列に線が引かれ、BINGO!と+100が出て、紙吹雪が舞います。_
 
 <p>
-  <a href="docs/images/phone-reach.png"><img src="docs/images/phone-reach.png" alt="スマホの画面。一番上の列がそろっていて、ナナメの列を完成させる最後のマス（日焼け止め）が点線で囲まれ、リーチの札が付いて点滅している。下の1行には「リーチ！ あと「日焼け止め」でビンゴ」と出ている。" height="320"></a>
-  <a href="docs/images/phone-combo.png"><img src="docs/images/phone-combo.png" alt="スマホの画面。3回続けてタップしたところで、+20と+30、2 COMBO!と3 COMBO!の表示、減っていくコンボのゲージ、新しく出た2つのリーチ!が見える。" height="320"></a>
-  <a href="docs/images/phone-perfect.png"><img src="docs/images/phone-perfect.png" alt="スマホの画面。16個すべてにスタンプを押したあと。準備完了のスタンプと、得点3,410、最大コンボ×10、10ラインのパーフェクト画面に、紙吹雪と持ち物の絵文字が降っている。" height="320"></a>
+  <a href="docs/images/phone-reach.png"><img src="docs/images/phone-reach.png" alt="スマホ幅の画面。一番上の列がそろっていて、ナナメの列を完成させる最後のマス（日焼け止め）が点線で囲まれ、リーチの札が付いている。上の欄は6/16、1ライン、160点。" height="320"></a>
+  <a href="docs/images/phone-combo.png"><img src="docs/images/phone-combo.png" alt="スマホ幅の画面。3回続けてタップし、+10・+20・+30、2 COMBO!と3 COMBO!、コンボのゲージが見える。健康調査票のマスにはリーチの札が付いている。" height="320"></a>
+  <a href="docs/images/phone-perfect.png"><img src="docs/images/phone-perfect.png" alt="スマホ幅の画面。16個すべてにスタンプを押したあとの結果画面。準備完了のスタンプと、得点3,410、最大コンボ×10、10ラインを表示している。" height="320"></a>
 </p>
 
-_スマホでの表示。左から、1列そろって次の列にリーチがかかったところ、3回続けたコンボ、全部そろったときのパーフェクト画面です。_
+_0.5.0のスマホ幅での表示。左から、1列そろって次の列にリーチがかかったところ、3回続けたコンボ、全部そろったときのパーフェクト画面です。_
 
 ## できること
 
 修学旅行の前の晩の荷造りは面倒です。持ちものビンゴは16個の持ち物をビンゴカードに並べるので、持ち物を1つ入れるたびにスタンプが押せて、何個かごとにお祝いがあります。
 
-- **タップするたびに反応があります。** スタンプ、波紋、火花、少しずつ高くなる音、スマホでは振動。2.5秒以内に続けてタップすると、コンボになります。
+- **タップするたびに手応えがあります。** 押し込んで弾むスタンプ、波紋、火花、打撃音で反応します。2.5秒以内に続けてタップするとコンボになり、音と演出が強まります。Androidでは3・6・9コンボで振動のリズムも変わります。
 - **次の目標がいつも見えます。** あと1つで列がそろうマスは、リーチの札を付けて点滅します。
-- **列がそろうたびにお祝いします。** タテ・ヨコ・ナナメの列（4×4なら10列）のどれかがそろうと、BINGO!の文字と紙吹雪が出ます。すべてそろうと、花火とスコアカードのフィナーレになります。
+- **ビンゴの数でお祝いが変わります。** タテ・ヨコ・ナナメの列（4×4なら10列）がそろうと、BINGO!の文字と紙吹雪が出ます。Androidではビンゴ・ダブル・トリプル以上で振動が変わり、全部そろうと約5秒、7発の花火・破裂音・振動がリズムを刻みます。結果画面は、アプリを切り替えて戻っても残ります。
 - **マスの数を選べます。** 3×3や5×5など、2×2から10×10までの正方形にできます。奇数のときは、真ん中をはじめからスタンプ済みのFREEマスにできます。[マスの数を変える](#マスの数を変える)を見てください。
 - **並びをシャッフルできます。** 🔀ボタンで、持ち物をランダムなマスに並べ替えます。チェックは持ち物といっしょに動くので、同じ持ち物で別の列をねらえます。並べ替えた並びも保存されます。
 - **得点は、そろえることへのごほうびです。** 付けたり外したりしても増えません。[得点のルール](#得点のルール)を見てください。
 - **進み具合は自動で保存されます。** 各自のブラウザ（localStorage）に保存されるので、ページを閉じても続きから始められます。サーバーには何も送りません。
-- **だれでも使えるように配慮しています。** マスは本物のチェックボックスなので、キーボードで操作できます。`prefers-reduced-motion`（動きを減らす設定）に従います。音は合成した音（音声ファイルなし）で、消すこともできます。
+- **音・振動・動きを選べます。** キーボードで操作でき、視覚のアニメーションは `prefers-reduced-motion`（動きを減らす設定）に従います。音はボタンで、振動は `vibrate={false}` で止められます。iPhoneの振動はタップ時の軽い触覚だけで、演出に合わせた振動はAndroid向けです（[音と振動](#音と振動)）。
 
 ## 概要
 
@@ -44,12 +44,22 @@ _スマホでの表示。左から、1列そろって次の列にリーチがか
 | --- | --- |
 | インストール | `npm install packing-bingo`。ESMとCommonJSの両方、TypeScriptの型付き |
 | 必要なもの | React 18以上と `react-dom`。ほかに依存するパッケージはありません。CSSの読み込みもProviderも不要です |
-| サイズ | 約14 kB（minify・gzip後、CSS込み、Reactは含まず） |
+| サイズ | 約17 kB（ブラウザ版のminify・gzip後、CSS込み、Reactは含まず） |
 | サーバー側での表示 | `"use client"` 付きで配布しています。サーバー側では空の `<div>` を出し、ブラウザでカードを作ります |
 | 見た目 | `<head>` に `<style>` を1つ追加します。クラス名はすべて `pkb-` で始まります。CSS変数で配色を変えられ、置いた場所の幅に合わせて自動で大きさが変わります |
 | 通信 | しません。見出しなどのフォントは、使うときにページで読み込みます（[フォント](#フォント)） |
 | 保存 | localStorageだけ。進み具合、シャッフルした並び、音のオン・オフの設定 |
 | ブラウザ | Chrome・Edge 105以上、Safari 16以上、Firefox 121以上。今のところChromiumでしか試していません（[詳しく](#対応ブラウザと確認済みの範囲)） |
+
+## 0.5.0へアップデート
+
+```sh
+npm install packing-bingo@latest
+```
+
+0.5.0では、ビンゴ別の振動と花火に同期したフィナーレ、強くなったタップ反応、最初に音量とAndroidのおやすみモードを確認するポップアップを追加しました。全達成の結果画面は、タブやアプリを切り替えても消えません。ポップアップの文言や非表示設定は[音と振動](#音と振動)で変更できます。
+
+0.3.xから更新する場合は、シャッフルと `vibrate` が追加され、フォントの自動読み込みがなくなった点にも注意してください。Google Fontsを使う場合は、クイックスタートの `<link>` をページに追加します。独自の完全な `Messages` オブジェクトには `shuffle` が必要です。詳しくは[変更履歴](CHANGELOG.md)を見てください。
 
 ## クイックスタート
 
@@ -137,7 +147,7 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
 ```html
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
 <div id="packing-bingo"></div>
-<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.3/dist/packing-bingo.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.5/dist/packing-bingo.global.js"></script>
 <script>
   PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
     items: [
@@ -441,11 +451,15 @@ interface PackingBingoState {
 
 ### 音と振動
 
+ページ内で最初にカードのマスを押したとき、「音と振動の準備はOK？」というポップアップで、音量を上げることと、Androidの「おやすみモード（Do Not Disturb）」をOFFにすることを確認します。「準備OK！はじめる」「このまま遊ぶ」またはEscで閉じると、そのページでは再表示しません。端末の設定は自分で変更してください。`messages.soundHint` と `messages.vibrationHint` で本文を変えられ、両方を空文字にするとポップアップを表示しません。`messages.playTitle`・`playStart`・`playSkip` でタイトルとボタンも変更できます。`vibrate={false}` のときは振動の案内を表示しません。
+
+独自の翻訳を使っている場合は、ポップアップ用の上記5キーも翻訳してください。省略したキーには日本語の既定値が使われます。英語の `en` にはこれらの翻訳も含まれています。
+
 音はWeb Audio APIで合成しています。音を鳴らす仕組みは、ユーザーがページを操作したあとにだけ作るので、ブラウザの自動再生の警告は出ません。🔊ボタンの選択は、localStorageの `packing-bingo-muted` に保存されます。そのあとに作られるカードは、ページを読み込み直したあとも含めて、この設定で始まります。すでに表示中のほかのカードは、それぞれの設定のままです。
 
 振動は端末によって違います。`vibrate={false}` で、どちらも止められます。
 
-- **Android**（Vibration APIがあるブラウザ）：タップで短く、外したときはもっと短く振動します。ビンゴ、パーフェクト、シャッフルのときは、それぞれのパターンで振動します。
+- **Android**（Vibration APIがあるブラウザ）：チェックした瞬間に振動し、3・6・9コンボでリズムが強くなります。ビンゴは大きな振動が1回、ダブルは2回、トリプル以上は3回と、それぞれ違うリズムです。パーフェクトでは、約5秒のあいだ、スタンプと花火の破裂音に合わせて短い連打・単発・長い振動を切り替え、最後は長めの1打で締めます。花火・音・振動は同じタイミングで発火します。ブラウザによるパターンの切り詰めを避けるため、各パターンは9要素以下です。リーチとシャッフルにも専用のパターンがあります。外したときは短い振動です。新しい操作をすると、その操作のパターンに切り替わります。リセット・破棄・タブを隠したときには、このカードが鳴らしている振動と音を止めます。「視差効果を減らす」などの設定は視覚のアニメーションだけに適用し、振動の長さは縮めません。振動は `vibrate={false}` で無効にできます。WebのVibration APIでは振幅を指定できず、実際の強さは端末・OS・ブラウザの設定に依存します。
 - **iPhone**（iOS 18以上のSafari）：Vibration APIがないので、マスのチェックボックスに `switch` 属性を付けています。指でタップしてチェックが切り替わると、iPhoneの軽い触覚フィードバックが出ます。出るのはタップの瞬間だけで、ビンゴなどの演出に合わせた振動はありません。`role="checkbox"` も付けているので、読み上げは今までどおりチェックボックスです。ほかのブラウザは `switch` 属性を無視します。
 - 端末の設定で振動や触覚を切っていると、振動しません。
 
@@ -472,7 +486,7 @@ CSSのコンテナクエリ（Chrome・Edge 105以上、Safari 16以上、Firefo
 - Chromiumでのシャッフル。チェックと得点が変わらないこと、何度シャッフルしても付け直しても得点が増えないこと、並びの保存と読み込み、リセットで元の並びに戻ること、FREEマスが動かないこと、Tabキーの順番とフォーカス
 - Vibration APIを呼ぶこと（呼び出しを記録して確認。実際の振動は未確認）
 
-これらの自動テストは、まだこのリポジトリには入っていません。Safari、Firefox、実際のスマホでは試しておらず、実機での音と振動も確かめていません。iPhoneの触覚フィードバックは、`switch` 属性のチェックボックスがもともと持っている動きを使ったもので、iOSのバージョンによっては出ないことがあります。iOS 26.5では、スクリプトから切り替えたときの触覚が出なくなったと報告されています。このカードが使うのは指でのタップだけです。絵文字は端末の絵文字フォントで表示されるので、端末ごとに見た目が違います。
+振動パターン・複数カード間の振動停止・音声の停止処理の回帰テストは、`npm test` で実行できます。フィードバックのブラウザ回帰テストは、初回に `npx playwright install chromium` を実行したあと、`npm run test:browser` で実行できます（ビルドも実行します）。タップ・コンボ・リーチ・ビンゴ・全達成、振動の停止、キーボード操作、画面幅、タブ切り替え後の結果画面を確認します。React・Next.jsなど、そのほかの確認スクリプトはまだ収録していません。Safari、Firefox、実際のスマホでは試しておらず、実機での音と振動も確かめていません。iPhoneの触覚フィードバックは、`switch` 属性のチェックボックスがもともと持っている動きを使ったもので、iOSのバージョンによっては出ないことがあります。iOS 26.5では、スクリプトから切り替えたときの触覚が出なくなったと報告されています。このカードが使うのは指でのタップだけです。絵文字は端末の絵文字フォントで表示されるので、端末ごとに見た目が違います。
 
 ## Reactなしで使う
 
@@ -521,6 +535,8 @@ npm run typecheck
 ## English
 
 Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. A 🔀 button moves the items to random squares (checks move with their items, and the arrangement is saved too; `shuffle={false}` hides it). Taps buzz on phones: through the Vibration API on Android, and with the system tap haptic of a `switch` checkbox on iPhone (iOS 18+); `vibrate={false}` turns both off. It has no runtime dependencies, makes no network requests, and is safe to render on the server (it ships with `"use client"`). It does not load its web fonts either: add the Google Fonts `<link>` from the quick start to the page's `<head>` to get them.
+
+Version 0.5.0 gives single, double and triple-or-more bingo different Android vibration patterns, and synchronizes the perfect-card rhythm with seven fireworks over about five seconds. A first-play dialog can be customized or hidden through the optional message keys. Muting stops scheduled audio, and switching apps preserves the final results. Visual reduced motion does not shorten haptics. Physical vibration strength is device-dependent and has not been verified on hardware. See the [v0.5.0 release notes](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.5.0).
 
 ```sh
 npm install packing-bingo
