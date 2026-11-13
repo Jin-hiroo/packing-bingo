@@ -18,6 +18,7 @@ export const CSS = `
 .pkb-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 16px;margin-bottom:18px}
 .pkb-tags{display:flex;gap:8px;align-items:center}
 .pkb-kicker{display:inline-block;background:var(--pk-ink);color:var(--pk-sun);font-weight:800;font-size:11px;letter-spacing:.14em;padding:4px 10px;border-radius:999px}
+.pkb-kicker:empty{display:none}
 .pkb-kicker.pkb-gold{color:#fff;background:linear-gradient(90deg,#E8473B,#FF9F1C,#1FA971,#2F6FED,#E8473B);background-size:200% 100%;animation:pkb-rb 2s linear infinite}
 @keyframes pkb-rb{to{background-position:-200% 0}}
 .pkb button{font-family:var(--pk-body)}
@@ -74,8 +75,13 @@ export const CSS = `
 .pkb-lines .pkb-o{stroke:var(--pk-ink);stroke-width:calc(6px*var(--pk-d))}
 .pkb-lines .pkb-draw line{animation:pkb-draw .45s ease-out .3s both}
 @keyframes pkb-draw{from{stroke-dashoffset:1}}
-.pkb-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;font-weight:800;font-size:13px;word-break:auto-phrase}
-.pkb-reset{appearance:none;flex:none;border:2px solid var(--pk-ink);background:transparent;border-radius:999px;padding:5px 12px;font-weight:800;font-size:12px;line-height:1.4;color:var(--pk-ink);cursor:pointer}
+.pkb-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 10px;margin-top:18px;font-weight:800;font-size:13px;word-break:auto-phrase}
+.pkb-foot>span{flex:1 1 14em}
+.pkb-foot>span:empty{flex-basis:0}
+.pkb-acts{display:flex;gap:8px;flex:none;margin-left:auto}
+.pkb-reset,.pkb-shuf{appearance:none;flex:none;border:2px solid var(--pk-ink);background:transparent;border-radius:999px;padding:5px 12px;font-weight:800;font-size:12px;line-height:1.4;color:var(--pk-ink);cursor:pointer}
+.pkb-shuf{background:var(--pk-paper);box-shadow:2px 2px 0 var(--pk-ink)}
+.pkb-shuf:active{transform:translate(2px,2px);box-shadow:none}
 .pkb-flash{position:absolute;inset:0;z-index:7;background:#fff;opacity:0;pointer-events:none}
 .pkb-flash.pkb-go{animation:pkb-flash .4s ease-out}
 @keyframes pkb-flash{0%{opacity:.8}100%{opacity:0}}

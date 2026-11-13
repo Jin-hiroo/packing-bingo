@@ -1,6 +1,7 @@
 /** Every piece of UI text. Pass a partial object as `messages` to override some of them. */
 export interface Messages {
   title: string;
+  /** A label above the title; empty (not shown) by default. */
   tag: string;
   /** A line under the title; empty (not shown) by default. */
   subtitle: string;
@@ -10,6 +11,8 @@ export interface Messages {
   combo: (n: number) => string;
   comboPop: (n: number) => string;
   reset: string;
+  /** The button that moves the items to random squares. */
+  shuffle: string;
   soundOn: string;
   soundOff: string;
   stamp: string;
@@ -25,7 +28,7 @@ export interface Messages {
   /** The status line before the first line is complete; empty by default. */
   statusStart: (left: number) => string;
   statusLines: (lines: number, left: number) => string;
-  /** `labels` are the items that would each complete a line right now. */
+  /** `labels` are the items that would each complete a line right now; empty by default. */
   statusReach: (labels: string[]) => string;
   statusDone: string;
   perfectTag: string;
@@ -48,7 +51,7 @@ export interface Messages {
 /** Japanese (default). */
 export const ja: Messages = {
   title: "持ちものビンゴ",
-  tag: "修学旅行",
+  tag: "",
   subtitle: "",
   packed: "そろった",
   bingo: "BINGO",
@@ -56,6 +59,7 @@ export const ja: Messages = {
   combo: (n) => `${n} COMBO`,
   comboPop: (n) => `${n} COMBO!`,
   reset: "リセット",
+  shuffle: "🔀 シャッフル",
   soundOn: "🔊 音あり",
   soundOff: "🔇 音なし",
   stamp: "OK",
@@ -69,8 +73,7 @@ export const ja: Messages = {
   bannerMulti: (n) => `一気に ${n} ライン！`,
   statusStart: () => "",
   statusLines: (lines, left) => `ビンゴ ${lines} ライン！ のこり ${left} こ`,
-  statusReach: (labels) =>
-    `リーチ！ あと${labels.slice(0, 2).map((l) => `「${l}」`).join("か")}${labels.length > 2 ? "など" : ""}でビンゴ`,
+  statusReach: () => "",
   statusDone: "🎉 パーフェクト！忘れ物ゼロで出発できます",
   perfectTag: "🏆 PERFECT",
   perfectStamp: "準備\n完了",
@@ -90,7 +93,7 @@ export const ja: Messages = {
 /** English. */
 export const en: Messages = {
   title: "Packing Bingo",
-  tag: "School trip",
+  tag: "",
   subtitle: "",
   packed: "PACKED",
   bingo: "BINGO",
@@ -98,6 +101,7 @@ export const en: Messages = {
   combo: (n) => `${n} COMBO`,
   comboPop: (n) => `${n} COMBO!`,
   reset: "Reset",
+  shuffle: "🔀 Shuffle",
   soundOn: "🔊 Sound on",
   soundOff: "🔇 Muted",
   stamp: "OK",
@@ -111,8 +115,7 @@ export const en: Messages = {
   bannerMulti: (n) => `${n} lines at once!`,
   statusStart: () => "",
   statusLines: (lines, left) => `${lines} bingo line${lines === 1 ? "" : "s"}! ${left} to go`,
-  statusReach: (labels) =>
-    `Reach! Pack ${labels.slice(0, 2).join(" or ")}${labels.length > 2 ? " (or more)" : ""} for a bingo`,
+  statusReach: () => "",
   statusDone: "🎉 Perfect! Nothing left behind.",
   perfectTag: "🏆 PERFECT",
   perfectStamp: "ALL\nSET",

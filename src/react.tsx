@@ -18,8 +18,10 @@ export interface PackingBingoProps extends Omit<PackingBingoOptions, "controlled
 }
 
 export interface PackingBingoHandle {
-  /** Clear the card and score (calls onChange). */
+  /** Clear the card and score (calls onChange), and put the items back in their own squares. */
   reset(): void;
+  /** Move the items to random squares, as the 🔀 button does. Checks stay with their items. */
+  shuffle(): void;
   /** Set the card. A one-item change plays like a tap; bigger jumps apply quietly. */
   setChecked(checked: readonly boolean[]): void;
   getState(): PackingBingoState | null;
@@ -33,7 +35,7 @@ type MessageKey = keyof Messages;
  */
 export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(function PackingBingo(props, ref) {
   // `fonts` is deprecated and ignored; leaving it out keeps it from forcing a rebuild.
-  const { checked, defaultChecked, className, style, onChange, onBingo, onPerfect, messages, fonts: _fonts, ...config } = props;
+  const { checked, defaultChecked, defaultOrder, className, style, onChange, onBingo, onPerfect, messages, fonts: _fonts, ...config } = props;
   const host = useRef<HTMLDivElement>(null);
   const inst = useRef<PackingBingoInstance | null>(null);
   const callbacks = useRef({ onChange, onBingo, onPerfect });
@@ -48,6 +50,8 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
   const storageKey = resolveStorageKey({ ...config, controlled });
   const latestKey = useRef(storageKey);
   if (controlled) latest.current = checked;
+  // The arrangement to keep across a rebuild (a shuffle is only saved when the card saves).
+  const latestOrder = useRef<readonly number[] | undefined>(defaultOrder);
 
   // Rebuild only when something that shapes the markup changes. Message *functions* are left
   // out of the key and called through a ref instead, so inline arrow functions neither force a
@@ -74,6 +78,7 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
       messages: liveMessages,
       controlled,
       defaultChecked: controlled || latestKey.current === storageKey ? latest.current : defaultChecked,
+      defaultOrder: latestKey.current === storageKey ? latestOrder.current : defaultOrder,
       onChange: (next) => {
         if (!controlled) latest.current = next;
         callbacks.current.onChange?.(next);
@@ -85,7 +90,9 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
     return () => {
       // Keep the current checks (including ones set through the ref) for the next build, and
       // always record their key, so they can't be carried into another key later.
-      if (!controlled) latest.current = instance.getState().checked;
+      const state = instance.getState();
+      if (!controlled) latest.current = state.checked;
+      latestOrder.current = state.order;
       latestKey.current = storageKey;
       instance.destroy();
       if (inst.current === instance) inst.current = null;
@@ -107,6 +114,7 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
     ref,
     () => ({
       reset: () => inst.current?.reset(),
+      shuffle: () => inst.current?.shuffle(),
       setChecked: (next) => inst.current?.setChecked(next, { animate: true }),
       getState: () => inst.current?.getState() ?? null,
     }),

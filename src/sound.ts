@@ -9,6 +9,7 @@ export interface Sound {
   boom(): void;
   tick(): void;
   note(step: number, at?: number): void;
+  shuffle(): void;
   close(): void;
 }
 
@@ -109,6 +110,12 @@ export function createSound(isMuted: () => boolean): Sound {
     },
     tick: () => tone(1760, 0, 0.03, "square", 0.03),
     note: (k, at = 0) => tone(step(k), at, 0.12, "square", 0.05),
+    shuffle() {
+      // A quick riffle of cards, then two notes as the squares land.
+      for (let i = 0; i < 7; i++) noise(i * 0.042, 0.05, 0.16, 1600 + i * 260);
+      tone(hz(7), 0.34, 0.12, "triangle", 0.14);
+      tone(hz(12), 0.42, 0.2, "triangle", 0.14);
+    },
     close() {
       if (ac) void ac.close().catch(() => {});
       ac = null;
