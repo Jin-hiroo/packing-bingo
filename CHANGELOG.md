@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0 (2026-11-13)
+
+### Added
+
+- A first-play dialog reminds players to turn up the volume and disable Android Do Not Disturb. It appears on the first square interaction once per page and can be dismissed with either button or Escape. Customize its optional message keys `soundHint`, `vibrationHint`, `playTitle`, `playStart` and `playSkip`; set both hints to empty strings to hide it.
+- Unit and Chromium browser regression tests (`npm test`, `npm run test:browser`).
+
+### Changed
+
+- Android haptics are longer: ordinary taps last 90 ms and combo rhythms build at 3, 6 and 9 taps. Single, double and triple-or-more bingo each have a distinct pattern. Perfect cards finish with an approximately five-second rhythm synchronized with the stamp, seven fireworks and their booms, ending in a longer final hit. Each individual pattern has at most nine entries. Actual vibration strength and availability depend on the device, OS and browser; iPhone retains only its system switch-tap haptic.
+- Reduced motion affects visual animations without shortening vibration; `vibrate={false}` explicitly disables haptics.
+- Stamps have a stronger impact and rebound, with larger bursts at higher combos and a more percussive tap sound.
+
+### Fixed
+
+- Delayed firework beats cannot override a newer tap, shuffle, or another card's vibration. Reset, undoing a line, hiding the page and destroying a card cancel its pending feedback.
+- Muting stops current and scheduled sounds, and active sounds release over 10 ms to avoid an abrupt cut.
+- The combo label stays visible between rapid taps while its timer restarts. Winning-line hops no longer cut off the tapped square's stamp animation.
+- Switching apps or locking the phone preserves Perfect results and settles their counters, including when the result was still waiting to appear. Returning restores focus to Close; dismissed results stay dismissed.
+
+### Docs
+
+- CDN and example-package references now use 0.5 so new integrations receive the current feedback behavior.
+
 ## 0.4.0 (2026-11-13)
 
 ### Added

@@ -15,6 +15,14 @@ export interface Messages {
   shuffle: string;
   soundOn: string;
   soundOff: string;
+  /** Volume reminder in the pre-play popup; an empty string hides it. */
+  soundHint?: string;
+  /** Android Do Not Disturb reminder; hidden when vibration is disabled or this is empty. */
+  vibrationHint?: string;
+  /** Pre-play popup title and buttons. */
+  playTitle?: string;
+  playStart?: string;
+  playSkip?: string;
   stamp: string;
   /** Text on the FREE square in the center (with `free`). */
   free: string;
@@ -62,6 +70,11 @@ export const ja: Messages = {
   shuffle: "🔀 シャッフル",
   soundOn: "🔊 音あり",
   soundOff: "🔇 音なし",
+  soundHint: "端末の音量を上げてね。",
+  vibrationHint: "Androidで振動を楽しむには、おやすみモード（Do Not Disturb）をOFFにしてね。",
+  playTitle: "音と振動の準備はOK？",
+  playStart: "準備OK！はじめる",
+  playSkip: "このまま遊ぶ",
   stamp: "OK",
   free: "FREE",
   reachBadge: "リーチ",
@@ -104,6 +117,11 @@ export const en: Messages = {
   shuffle: "🔀 Shuffle",
   soundOn: "🔊 Sound on",
   soundOff: "🔇 Muted",
+  soundHint: "Turn up your device volume before playing.",
+  vibrationHint: "On Android, turn off Do Not Disturb to enjoy vibration.",
+  playTitle: "Ready for sound and vibration?",
+  playStart: "Ready! Let's play",
+  playSkip: "Play as is",
   stamp: "OK",
   free: "FREE",
   reachBadge: "REACH",

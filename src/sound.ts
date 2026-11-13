@@ -10,6 +10,7 @@ export interface Sound {
   tick(): void;
   note(step: number, at?: number): void;
   shuffle(): void;
+  stop(): void;
   close(): void;
 }
 
@@ -22,9 +23,41 @@ type WithUserActivation = Navigator & { userActivation?: { hasBeenActive: boolea
 export function createSound(isMuted: () => boolean): Sound {
   let ac: AudioContext | null = null;
   let out: GainNode | null = null;
+  const voices = new Map<AudioScheduledSourceNode, { gain: GainNode; start: number }>();
+  function track(source: AudioScheduledSourceNode, gain: GainNode, start: number, nodes: AudioNode[]) {
+    voices.set(source, { gain, start });
+    source.onended = () => {
+      voices.delete(source);
+      source.disconnect();
+      nodes.forEach((n) => n.disconnect());
+    };
+  }
+  function stop() {
+    const now = ac?.currentTime ?? 0;
+    voices.forEach(({ gain, start }, source) => {
+      try {
+        if (start > now) {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(0, now);
+          source.stop(now);
+        } else {
+          // A 10ms release avoids a click from cutting a waveform mid-cycle.
+          if (typeof gain.gain.cancelAndHoldAtTime === "function") gain.gain.cancelAndHoldAtTime(now);
+          else {
+            const value = gain.gain.value;
+            gain.gain.cancelScheduledValues(now);
+            gain.gain.setValueAtTime(value, now);
+          }
+          gain.gain.linearRampToValueAtTime(0, now + 0.01);
+          source.stop(now + 0.01);
+        }
+      } catch { /* already ended */ }
+    });
+    voices.clear();
+  }
 
   function audio(): AudioContext | null {
-    if (isMuted() || typeof window === "undefined") return null;
+    if (isMuted() || typeof window === "undefined" || document.hidden) return null;
     // Browsers refuse to start audio before the first user gesture; don't even try.
     const ua = (navigator as WithUserActivation).userActivation;
     if (!ac && ua && !ua.hasBeenActive) return null;
@@ -54,6 +87,7 @@ export function createSound(isMuted: () => boolean): Sound {
     g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g).connect(out);
+    track(o, g, t, [g]);
     o.start(t);
     o.stop(t + dur + 0.05);
   }
@@ -75,6 +109,7 @@ export function createSound(isMuted: () => boolean): Sound {
     f.Q.value = 0.7;
     g.gain.value = vol;
     s.connect(f).connect(g).connect(out);
+    track(s, g, t, [f, g]);
     s.start(t);
   }
 
@@ -83,9 +118,12 @@ export function createSound(isMuted: () => boolean): Sound {
   return {
     pop(k) {
       const f = step(k);
+      const energy = Math.min(3, Math.floor((k + 1) / 3));
       tone(f, 0, 0.16, "triangle", 0.22);
       tone(f * 2, 0, 0.08, "sine", 0.06);
-      tone(150, 0, 0.09, "sine", 0.25, 60);
+      tone(170 + energy * 15, 0, 0.11, "sine", 0.28, 48);
+      noise(0, 0.035, 0.1 + energy * 0.025, 1800);
+      if (energy) tone(f * 1.5, 0.035, 0.11, "triangle", 0.04 + energy * 0.015);
     },
     off: () => tone(392, 0, 0.1, "sine", 0.1, 262),
     reach() {
@@ -116,7 +154,9 @@ export function createSound(isMuted: () => boolean): Sound {
       tone(hz(7), 0.34, 0.12, "triangle", 0.14);
       tone(hz(12), 0.42, 0.2, "triangle", 0.14);
     },
+    stop,
     close() {
+      stop();
       if (ac) void ac.close().catch(() => {});
       ac = null;
       out = null;
