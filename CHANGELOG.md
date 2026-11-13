@@ -1,11 +1,27 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-11-13)
+
+### Added
+
+- A 🔀 shuffle button (`shuffle`, on by default) moves the items to random squares, with the squares flying to their new places. Checks move with their items and the score does not change: lines a shuffle happens to complete count as complete but earn no points, and a line's points are now tied to its items, so shuffling can't earn them twice. The arrangement is saved under `"packing-bingo-order:"` + the storage key, and the reset button puts the items back. `shuffle()` on the instance and the React ref does the same as the button, `getState().order` gives the item in each square, and `defaultOrder` sets the starting arrangement.
+- Taps give haptic feedback on iPhone (iOS 18 and later): the hidden checkbox in each square has the `switch` attribute (with `role="checkbox"`), which Safari answers with the system tap haptic. Not yet checked on a real iPhone.
+- `vibrate` (default true) turns all vibration off when false.
 
 ### Changed
 
+- TypeScript: `Messages.shuffle` and `PackingBingoState.order` are new required fields. Update full message objects and state mocks when upgrading; partial `messages` overrides continue to use the defaults.
+- The default card no longer shows the school-trip tag or the reach status sentence, in either Japanese or English. Empty tags leave no badge behind. Set `tag` or `messages.statusReach` to supply your own text.
+- On Android, a tap now buzzes for 18 ms (was 12 ms), unchecking buzzes for 8 ms, and a shuffle has its own pattern.
+- The footer wraps: on narrow cards the status line takes its own row above the shuffle and reset buttons.
+
 - The card no longer loads its fonts from Google Fonts, so it makes no network requests and its code contains no external URLs (Socket flagged the font URL as "URL strings"). To keep the look, add one line to the page's `<head>`: `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />`. Without it, body text uses Hiragino Maru Gothic on Apple devices, and headings (and body text elsewhere) use `--pkb-font-fallback`. Sites with a Content Security Policy no longer need to allow Google's font hosts unless they add that line.
 - `fonts` is deprecated and ignored. Code that passes `fonts={false}` still compiles and behaves as before, and changing it no longer rebuilds a React card.
+
+### Fixed
+
+- Unchecking a previously packed item, shuffling and checking it again cannot earn points for new combinations of already packed items. Lines containing an item never packed before that shuffle can still earn their first reward.
+- Reset saves the original arrangement too, so a custom `defaultOrder` cannot reappear on the next page load.
 
 ### Docs
 

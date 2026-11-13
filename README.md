@@ -29,10 +29,11 @@ _スマホでの表示。左から、1列そろって次の列にリーチがか
 
 修学旅行の前の晩の荷造りは面倒です。持ちものビンゴは16個の持ち物をビンゴカードに並べるので、持ち物を1つ入れるたびにスタンプが押せて、何個かごとにお祝いがあります。
 
-- **タップするたびに反応があります。** スタンプ、波紋、火花、少しずつ高くなる音。2.5秒以内に続けてタップすると、コンボになります。
-- **次の目標がいつも見えます。** あと1つで列がそろうマスは、リーチの札を付けて点滅し、下の1行にその持ち物の名前が出ます。
+- **タップするたびに反応があります。** スタンプ、波紋、火花、少しずつ高くなる音、スマホでは振動。2.5秒以内に続けてタップすると、コンボになります。
+- **次の目標がいつも見えます。** あと1つで列がそろうマスは、リーチの札を付けて点滅します。
 - **列がそろうたびにお祝いします。** タテ・ヨコ・ナナメの列（4×4なら10列）のどれかがそろうと、BINGO!の文字と紙吹雪が出ます。すべてそろうと、花火とスコアカードのフィナーレになります。
 - **マスの数を選べます。** 3×3や5×5など、2×2から10×10までの正方形にできます。奇数のときは、真ん中をはじめからスタンプ済みのFREEマスにできます。[マスの数を変える](#マスの数を変える)を見てください。
+- **並びをシャッフルできます。** 🔀ボタンで、持ち物をランダムなマスに並べ替えます。チェックは持ち物といっしょに動くので、同じ持ち物で別の列をねらえます。並べ替えた並びも保存されます。
 - **得点は、そろえることへのごほうびです。** 付けたり外したりしても増えません。[得点のルール](#得点のルール)を見てください。
 - **進み具合は自動で保存されます。** 各自のブラウザ（localStorage）に保存されるので、ページを閉じても続きから始められます。サーバーには何も送りません。
 - **だれでも使えるように配慮しています。** マスは本物のチェックボックスなので、キーボードで操作できます。`prefers-reduced-motion`（動きを減らす設定）に従います。音は合成した音（音声ファイルなし）で、消すこともできます。
@@ -47,7 +48,7 @@ _スマホでの表示。左から、1列そろって次の列にリーチがか
 | サーバー側での表示 | `"use client"` 付きで配布しています。サーバー側では空の `<div>` を出し、ブラウザでカードを作ります |
 | 見た目 | `<head>` に `<style>` を1つ追加します。クラス名はすべて `pkb-` で始まります。CSS変数で配色を変えられ、置いた場所の幅に合わせて自動で大きさが変わります |
 | 通信 | しません。見出しなどのフォントは、使うときにページで読み込みます（[フォント](#フォント)） |
-| 保存 | localStorageだけ。進み具合と、音のオン・オフの設定 |
+| 保存 | localStorageだけ。進み具合、シャッフルした並び、音のオン・オフの設定 |
 | ブラウザ | Chrome・Edge 105以上、Safari 16以上、Firefox 121以上。今のところChromiumでしか試していません（[詳しく](#対応ブラウザと確認済みの範囲)） |
 
 ## クイックスタート
@@ -264,7 +265,7 @@ controlledのカードの動き：
 - タップしただけでは、カードは変わりません。ユーザーが求めた状態（持ち物の数だけの配列）で `onChange` が呼ばれ、`checked` が変わるとカードがそれに合わせます。`checked` を変えなければ、タップは取り消されます。
 - `checked` がちょうど1個だけ変わったときは、タップと同じように演出します（スタンプ、音、ビンゴやフィナーレ）。サーバーからデータが届いたときのように一度に何個も変わったときは、演出なしで静かに反映し、同時にそろった列のボーナスも付けません。
 - リセットボタンを押すと、すべて `false` の配列で `onChange` が呼ばれます。
-- `storageKey` は使われません。
+- `storageKey` は使われません。シャッフルした並びも保存しないので、ページを読み込み直すと元の並びに戻ります。並びも残したいときは、`getState().order` を保存しておき、`defaultOrder` に渡します。
 
 ### ビンゴの瞬間を受け取る
 
@@ -298,7 +299,7 @@ function PackingPage() {
 }
 ```
 
-`reset()`・`setChecked()`・`getState()` が使えます。くわしくは [ref](#ref) を見てください。controlledのカードでは、`setChecked()` ではなく `checked` を変えてください。
+`reset()`・`shuffle()`・`setChecked()`・`getState()` が使えます。くわしくは [ref](#ref) を見てください。controlledのカードでは、`setChecked()` ではなく `checked` を変えてください。
 
 ### 配色とレイアウト
 
@@ -329,7 +330,7 @@ function PackingPage() {
 | `size` | `number`（2〜10） | `items` の数から決まる（既定の持ち物なら4） | 1辺のマスの数。[マスの数を変える](#マスの数を変える)を見てください |
 | `free` | `boolean` | `false` | 真ん中をFREEマスにする。`size` が奇数のときだけ |
 | `messages` | `Partial<Messages>` | `ja` | 画面の文言。日本語の既定値の上に重なります。英語の `en` も入っています |
-| `title`・`tag`・`subtitle` | `string` | `messages` の値 | 見出し、その上の小さなラベル、その下の1行。`subtitle` は既定では空で、表示しません |
+| `title`・`tag`・`subtitle` | `string` | `messages` の値 | 見出し、その上の小さなラベル、その下の1行。`tag`・`subtitle` は既定では空で、表示しません |
 | `storageKey` | `string \| null` | 持ち物から自動で決まる | 進み具合を保存するlocalStorageのキー。`null` で保存しません。controlledのときは使われません |
 | `defaultChecked` | `readonly boolean[]`（持ち物と同じ数） | すべて `false` | uncontrolledのカードの最初の状態。保存された進み具合があれば、そちらが優先です |
 | `checked` | `readonly boolean[]`（持ち物と同じ数） | なし | 指定するとcontrolledになります。[自分のサーバーに保存する](#自分のサーバーに保存する)を見てください |
@@ -337,18 +338,21 @@ function PackingPage() {
 | `onBingo` | `(event: BingoEvent) => void` | なし | タップで1列以上そろった |
 | `onPerfect` | `(event: PerfectEvent) => void` | なし | タップでカード全体がそろった |
 | `sound` | `boolean` | `true` | 音の最初の設定。ユーザーが🔊ボタンで選ぶまで使われます |
+| `shuffle` | `boolean` | `true` | 🔀シャッフルボタンを出します。`false` でボタンを消しても、`ref.shuffle()` は使えます |
+| `defaultOrder` | `readonly number[]`（持ち物と同じ数） | 元の並び | 最初の並び。`getState().order` と同じ形です。シャッフルした並びが保存されていれば、そちらが優先です。どの持ち物の番号もちょうど1回ずつ入っていないときは使いません |
+| `vibrate` | `boolean` | `true` | スマホで振動します。[音と振動](#音と振動)を見てください |
 | `fonts` | `boolean` | なし | 非推奨。0.4.0からは何もしません。フォントはページで読み込みます（[フォント](#フォント)） |
 | `demo` | `boolean` | `false` | デモ用のボタンを出します。保存された進み具合も `defaultChecked` もなければ、一番上の列と、左上からのナナメの途中までが埋まった状態（4×4なら6マス）から始めます。`storageKey` を指定しない限り保存しません |
 | `className`・`style` | | なし | 外側の `<div>` に付きます |
 | `ref` | `Ref<PackingBingoHandle>` | なし | [ref](#ref) を見てください |
 
-propsは中身で比べるので、配列やオブジェクトをその場で書いても構いません。`items`・`size`・`free`・`title`・`tag`・`subtitle`・`storageKey`・`sound`・`demo`、または `messages` の文字列が変わると、カードを作り直します。保存先のキーが変わらなければ、チェックはそのまま残ります。キーが変わったとき（`items` を変えて自動のキーが変わったときも含む）は、新しいキーに保存された進み具合を読み込みます。得点は[得点のルール](#得点のルール)のとおり計算し直します。`messages` の関数はpropsやstateを使っても構いません。`messages` が変わると、作り直さずに下の1行だけを描き直します。
+propsは中身で比べるので、配列やオブジェクトをその場で書いても構いません。`items`・`size`・`free`・`title`・`tag`・`subtitle`・`storageKey`・`sound`・`shuffle`・`vibrate`・`demo`、または `messages` の文字列が変わると、カードを作り直します。保存先のキーが変わらなければ、チェックとシャッフルした並びはそのまま残ります。キーが変わったとき（`items` を変えて自動のキーが変わったときも含む）は、新しいキーに保存された進み具合を読み込みます。得点は[得点のルール](#得点のルール)のとおり計算し直します。`messages` の関数はpropsやstateを使っても構いません。`messages` が変わると、作り直さずに下の1行だけを描き直します。
 
 ### イベント
 
 ```ts
 interface BingoEvent {
-  newLines: number[]; // このタップでそろった列（bingoLines(size, free) の番号。4×4ならLINESと同じ）
+  newLines: number[]; // このタップでそろった列（bingoLines(size, free) の番号。4×4ならLINESと同じ。シャッフルしたあとも、マスの位置の番号）
   totalLines: number; // これまでにそろった列の数
   score: number;      // このタップのあとの得点
 }
@@ -363,8 +367,10 @@ interface PerfectEvent {
 
 ```ts
 interface PackingBingoHandle {
-  /** リセットボタンと同じ。カードと得点を消して onChange を呼ぶ。controlled のカードでは onChange を呼ぶだけ。 */
+  /** リセットボタンと同じ。カードと得点を消し、持ち物を元のマスに戻して onChange を呼ぶ。controlled のカードでは、並びを戻して onChange を呼ぶだけ。 */
   reset(): void;
+  /** 🔀ボタンと同じ。持ち物をランダムなマスに並べ替える。チェックは持ち物といっしょに動き、onChange は呼ばない。 */
+  shuffle(): void;
   /** 1個だけの変化はタップと同じように演出し、それより大きな変化は静かに反映する。onChange は呼ばない。 */
   setChecked(checked: readonly boolean[]): void;
   /** 表示前とサーバー側では null。 */
@@ -379,24 +385,27 @@ interface PackingBingoState {
   complete: boolean;  // すべての持ち物にチェックが付いている
   size: number;       // 1辺のマスの数
   free: boolean;      // 真ん中がFREEマスか
+  order: number[];    // マスごとの持ち物の番号（左上から横に1行ずつ、FREEマスは飛ばす）。シャッフルするまでは [0, 1, 2, …]
 }
 ```
 
-`LINES` もexportしています。4×4のカードの列で、0〜3がヨコの列、4〜7がタテの列、8が左上からのナナメ、9が右上からのナナメです。ほかの大きさの列は `bingoLines(size, free)` で取れます。並び方は同じで、ヨコの列、タテの列、左上からのナナメ、右上からのナナメの順です。中身は `checked` と同じ持ち物の番号なので、`free` のときは真ん中を通る列だけ `size` − 1 個になります。
+`LINES` もexportしています。4×4のカードの列で、0〜3がヨコの列、4〜7がタテの列、8が左上からのナナメ、9が右上からのナナメです。ほかの大きさの列は `bingoLines(size, free)` で取れます。並び方は同じで、ヨコの列、タテの列、左上からのナナメ、右上からのナナメの順です。中身は `checked` と同じ持ち物の番号なので、`free` のときは真ん中を通る列だけ `size` − 1 個になります。これは元の並びのときの番号です。シャッフルしたカードでは、列 `k` の持ち物は `bingoLines(size, free)[k].map((s) => order[s])` です（`order` は `getState().order`）。
 
 ### 得点のルール
 
 - 初めてチェックした持ち物は、10点 × そのときのコンボ数。コンボは、2.5秒以内に続けたタップの数です。
-- 1回のタップでn列そろうと、100点 × n²。同じ列で得点するのは1回だけです。
+- 1回のタップでn列そろうと、100点 × n²。同じ持ち物の組み合わせの列で得点するのは1回だけです（シャッフルしたあとも同じです）。
 - 初めてカード全体をそろえると、1000点を足します。
 - チェックを外しても得点は減らず、付け直しても増えません。
+- シャッフルしても得点は変わりません。並べ替えたことでそろった列は、そろった列として数えますが、得点もお祝いもありません。
+- シャッフル時に一度でもチェックしたことのある持ち物だけでできる列は、新しい組み合わせでも得点しません。シャッフル前にチェックを外しても同じです。
 - 静かに反映したあとや作り直したあと（保存された進み具合を読み込んだときなど）は、チェックした持ち物1個につき10点、そろった列1つにつき100点で計算し直し、最大コンボは0からになります。
 
 ### 文言のキー
 
 `messages` には、次のキーを好きなだけ指定できます。日本語と英語の一式は、[`src/messages.ts`](src/messages.ts) の `ja` と `en` です。
 
-- **文字列：** `title`、`tag`、`subtitle`、`packed`、`bingo`、`score`、`reset`、`soundOn`、`soundOff`、`stamp`、`free`、`reachBadge`、`reachPop`、`bannerSingle`、`bannerDouble`、`bannerTriple`、`statusDone`、`perfectTag`、`perfectStamp`、`perfectTitle`、`perfectBody`、`statScore`、`statCombo`、`statLines`、`close`、`demoLabel`、`demoBingo`、`demoPerfect`、`demoRestore`。`perfectStamp` と `perfectBody` では、`\n` で改行します。
+- **文字列：** `title`、`tag`、`subtitle`、`packed`、`bingo`、`score`、`reset`、`shuffle`、`soundOn`、`soundOff`、`stamp`、`free`、`reachBadge`、`reachPop`、`bannerSingle`、`bannerDouble`、`bannerTriple`、`statusDone`、`perfectTag`、`perfectStamp`、`perfectTitle`、`perfectBody`、`statScore`、`statCombo`、`statLines`、`close`、`demoLabel`、`demoBingo`、`demoPerfect`、`demoRestore`。`perfectStamp` と `perfectBody` では、`\n` で改行します。
 - **関数（どれも文字列を返します）：** `combo(n)`、`comboPop(n)`、`bannerNth(totalLines)`、`bannerMulti(newLines)`、`statusStart(left)`、`statusLines(lines, left)`、`statusReach(labels)`、`perfectBonus(points)`。
 - `perfectBody` は、文字列のほかに、持ち物の数を受け取る関数 `perfectBody(total)` にもできます。`ja` と `en` では関数で、「16こ ぜんぶそろった！」の数がカードに合わせて変わります。
 - `subtitle`（見出しの下の1行）と `statusStart(left)`（1列もそろう前の下の1行）は、`ja` と `en` のどちらでも空なので、表示しません。出したいときは `subtitle="タップでスタンプ。タテ・ヨコ・ナナメでビンゴ！"` や `` messages={{ statusStart: (left) => `のこり ${left} こ` }} `` のように指定します。
@@ -432,15 +441,21 @@ interface PackingBingoState {
 
 ### 音と振動
 
-音はWeb Audio APIで合成しています。音を鳴らす仕組みは、ユーザーがページを操作したあとにだけ作るので、ブラウザの自動再生の警告は出ません。🔊ボタンの選択は、localStorageの `packing-bingo-muted` に保存されます。そのあとに作られるカードは、ページを読み込み直したあとも含めて、この設定で始まります。すでに表示中のほかのカードは、それぞれの設定のままです。タップやビンゴのときは、Vibration APIがある端末で振動します。実際にはAndroidのブラウザです。
+音はWeb Audio APIで合成しています。音を鳴らす仕組みは、ユーザーがページを操作したあとにだけ作るので、ブラウザの自動再生の警告は出ません。🔊ボタンの選択は、localStorageの `packing-bingo-muted` に保存されます。そのあとに作られるカードは、ページを読み込み直したあとも含めて、この設定で始まります。すでに表示中のほかのカードは、それぞれの設定のままです。
+
+振動は端末によって違います。`vibrate={false}` で、どちらも止められます。
+
+- **Android**（Vibration APIがあるブラウザ）：タップで短く、外したときはもっと短く振動します。ビンゴ、パーフェクト、シャッフルのときは、それぞれのパターンで振動します。
+- **iPhone**（iOS 18以上のSafari）：Vibration APIがないので、マスのチェックボックスに `switch` 属性を付けています。指でタップしてチェックが切り替わると、iPhoneの軽い触覚フィードバックが出ます。出るのはタップの瞬間だけで、ビンゴなどの演出に合わせた振動はありません。`role="checkbox"` も付けているので、読み上げは今までどおりチェックボックスです。ほかのブラウザは `switch` 属性を無視します。
+- 端末の設定で振動や触覚を切っていると、振動しません。
 
 ### 保存されるデータ
 
-チェックは、持ち物の数（4×4なら16個。FREEマスは含みません）だけの真偽値のJSON配列として、localStorageに保存されます。キーは `storageKey`、指定しなければ `packing-bingo:` で始まる、持ち物リストから決まるキーです。得点は保存しません。保存された進み具合は `defaultChecked` より優先されます。プライベートブラウズなどで保存できない環境では、保存せずにそのまま動きます。
+チェックは、持ち物の数（4×4なら16個。FREEマスは含みません）だけの真偽値のJSON配列として、localStorageに保存されます。キーは `storageKey`、指定しなければ `packing-bingo:` で始まる、持ち物リストから決まるキーです。得点は保存しません。保存された進み具合は `defaultChecked` より優先されます。シャッフルした並びは、`packing-bingo-order:` のあとにそのキーを付けたキー（たとえば `packing-bingo-order:okinawa-2026`）に、マスごとの持ち物の番号のJSON配列として保存します。元の並びに戻したときも保存するので、`defaultOrder` を指定していても、次に開くと元の並びのままです。プライベートブラウズなどで保存できない環境では、保存せずにそのまま動きます。
 
 ### アクセシビリティ
 
-マスは `<label>` の中の本物のチェックボックスなので、TabキーとSpaceキーで操作でき、持ち物の名前がそのまま読み上げられます。絵文字とスタンプは、読み上げの対象から外しています。下の1行は、変化を控えめに読み上げる領域（polite live region）です。`prefers-reduced-motion` のときは、揺れ、弾み、紙吹雪を止めます。スクリーンリーダーでの確認は、まだしていません。
+マスは `<label>` の中の本物のチェックボックスなので、TabキーとSpaceキーで操作でき、持ち物の名前がそのまま読み上げられます。絵文字とスタンプは、読み上げの対象から外しています。下の1行は、変化を控えめに読み上げる領域（polite live region）です。シャッフルするとマスのHTMLの順番も入れ替わるので、Tabキーで進む順番は見た目の並びと同じです。フォーカスしていたマスは、動いたあともフォーカスしたままです。`prefers-reduced-motion` のときは、揺れ、弾み、紙吹雪を止めます。スクリーンリーダーでの確認は、まだしていません。
 
 ### 対応ブラウザと確認済みの範囲
 
@@ -454,8 +469,10 @@ CSSのコンテナクエリ（Chrome・Edge 105以上、Safari 16以上、Firefo
 - npmとpnpmでのnpmからのインストール
 - Chromiumで、パソコンとスマホの大きさでの自動タップ。演出の途中でのリセットやコールバックも含む
 - 自動保存。持ち物リストごとに別々に保存されること、`storageKey={null}` で保存しないこと、持ち物を変えると新しく始まり、戻すと前の進み具合が戻ること
+- Chromiumでのシャッフル。チェックと得点が変わらないこと、何度シャッフルしても付け直しても得点が増えないこと、並びの保存と読み込み、リセットで元の並びに戻ること、FREEマスが動かないこと、Tabキーの順番とフォーカス
+- Vibration APIを呼ぶこと（呼び出しを記録して確認。実際の振動は未確認）
 
-これらの自動テストは、まだこのリポジトリには入っていません。Safari、Firefox、実際のスマホでは試しておらず、実機での音も確かめていません。絵文字は端末の絵文字フォントで表示されるので、端末ごとに見た目が違います。
+これらの自動テストは、まだこのリポジトリには入っていません。Safari、Firefox、実際のスマホでは試しておらず、実機での音と振動も確かめていません。iPhoneの触覚フィードバックは、`switch` 属性のチェックボックスがもともと持っている動きを使ったもので、iOSのバージョンによっては出ないことがあります。iOS 26.5では、スクリプトから切り替えたときの触覚が出なくなったと報告されています。このカードが使うのは指でのタップだけです。絵文字は端末の絵文字フォントで表示されるので、端末ごとに見た目が違います。
 
 ## Reactなしで使う
 
@@ -468,7 +485,7 @@ const card = createPackingBingo(document.getElementById("bingo")!, {
   tag: "2年B組",
   onBingo: (e) => console.log(e),
 });
-// card.reset()、card.getState()、card.setChecked(next, { animate: true })、card.destroy()
+// card.reset()、card.shuffle()、card.getState()、card.setChecked(next, { animate: true })、card.destroy()
 ```
 
 オプションは、Reactのpropsから `checked`・`className`・`style`・`ref` を除いたものです（型は `PackingBingoOptions`）。controlledにするときは `controlled: true` を渡し、`setChecked()` で状態を変えます。`setChecked()` は、`{ animate: true }` を付けないと、いつも静かに反映します。
@@ -503,7 +520,7 @@ npm run typecheck
 
 ## English
 
-Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. It has no runtime dependencies, makes no network requests, and is safe to render on the server (it ships with `"use client"`). It does not load its web fonts either: add the Google Fonts `<link>` from the quick start to the page's `<head>` to get them.
+Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. A 🔀 button moves the items to random squares (checks move with their items, and the arrangement is saved too; `shuffle={false}` hides it). Taps buzz on phones: through the Vibration API on Android, and with the system tap haptic of a `switch` checkbox on iPhone (iOS 18+); `vibrate={false}` turns both off. It has no runtime dependencies, makes no network requests, and is safe to render on the server (it ships with `"use client"`). It does not load its web fonts either: add the Google Fonts `<link>` from the quick start to the page's `<head>` to get them.
 
 ```sh
 npm install packing-bingo

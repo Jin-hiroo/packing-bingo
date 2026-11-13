@@ -26,6 +26,11 @@ export interface PackingBingoState {
   size: number;
   /** Whether the center is a FREE square. */
   free: boolean;
+  /**
+   * The item in each slot (row by row, skipping the FREE square): `[0, 1, 2, …]` until the card
+   * is shuffled. Line `k` holds the items `bingoLines(size, free)[k].map((s) => order[s])`.
+   */
+  order: number[];
 }
 
 export interface BingoEvent {
@@ -77,6 +82,23 @@ export interface PackingBingoOptions {
   /** Start with sound on (default) or off. A choice made with the sound button is remembered. */
   sound?: boolean;
   /**
+   * Show the 🔀 button that moves the items to random squares (default true). Checks stay with
+   * their items. The arrangement is saved next to the checks, under "packing-bingo-order:" +
+   * the storage key.
+   */
+  shuffle?: boolean;
+  /**
+   * The starting arrangement, as in `getState().order`, used when no shuffled arrangement is
+   * saved. Ignored unless it lists every item index exactly once.
+   */
+  defaultOrder?: readonly number[];
+  /**
+   * Buzz on phones (default true): a short buzz on each tap and longer patterns for a bingo, a
+   * perfect card and a shuffle where the Vibration API exists (Android), and the system tap
+   * haptic on iPhone (iOS 18 and later), which only follows a real tap.
+   */
+  vibrate?: boolean;
+  /**
    * @deprecated Ignored since 0.4.0: the card no longer loads fonts. To get Dela Gothic One and
    * M PLUS Rounded 1c, load them on the page (see the README's フォント section).
    */
@@ -94,8 +116,13 @@ export interface PackingBingoInstance {
    * bingo or perfect it causes). Any other change, like loading saved progress, applies quietly.
    */
   setChecked(next: readonly boolean[], options?: { animate?: boolean }): void;
-  /** Clear the card and score (calls onChange). */
+  /** Clear the card and score (calls onChange), and put the items back in their own squares. */
   reset(): void;
+  /**
+   * Move the items to random squares, as the 🔀 button does. Checks stay with their items; lines
+   * the new arrangement happens to complete count as done but earn no points.
+   */
+  shuffle(): void;
   getState(): PackingBingoState;
   /** Redraw the status text, e.g. after functions in `messages` start returning something else. */
   refresh(): void;
@@ -107,6 +134,8 @@ const CONFETTI = ["#E8473B", "#2F6FED", "#1FA971", "#FFFDF6", "#2A1F14", "#FF9F1
 const COMBO_COLORS = ["#FF9F1C", "#1FA971", "#2F6FED", "#9B5DE5", "#E8473B"];
 const COMBO_MS = 2500;
 const MUTE_KEY = "packing-bingo-muted";
+/** A shuffled arrangement is saved under this prefix + the card's storage key. */
+const ORDER_PREFIX = "packing-bingo-order:";
 
 type WithUserActivation = Navigator & { userActivation?: { hasBeenActive: boolean } };
 
@@ -127,6 +156,14 @@ function writeStore(key: string, value: string) {
     /* private mode or blocked storage: run without saving */
   }
 }
+/** The delay of the shine on completed lines: it sweeps from the top left (0.72 s to the far corner). */
+const glintDelay = (c: number, n: number) => `${+(((Math.floor(c / n) + (c % n)) * 0.36) / Math.max(1, n - 1)).toFixed(3)}s`;
+
+/** A line's items in a form that doesn't depend on where they sit, so a shuffle can't re-award it. */
+const lineKey = (l: readonly number[]) => l.slice().sort((a, b) => a - b).join(",");
+
+/** How long the squares take to fly to their new places on a shuffle (including the stagger). */
+const FLY_MS = 560;
 
 function ensureStyles() {
   if (document.getElementById("pkb-styles")) return;
@@ -136,17 +173,25 @@ function ensureStyles() {
   document.head.appendChild(s);
 }
 
-function template(L: Layout, M: Messages, demo: boolean) {
+interface Features {
+  demo: boolean;
+  shuffle: boolean;
+  vibrate: boolean;
+}
+
+function template(L: Layout, M: Messages, { demo, shuffle, vibrate }: Features) {
   const n = L.size;
+  // iOS Safari plays the system haptic when a real tap toggles a `switch` checkbox (iOS 18+);
+  // role="checkbox" keeps it announced as a checkbox. Other browsers ignore the attribute.
+  const input = vibrate ? `<input type="checkbox" switch role="checkbox">` : `<input type="checkbox">`;
   const tiles = Array.from({ length: n * n }, (_, c) => {
-    // The shine on completed lines sweeps from the top left corner (0.72 s to the far corner).
-    const gd = `--pkb-gd:${+(((Math.floor(c / n) + (c % n)) * 0.36) / Math.max(1, n - 1)).toFixed(3)}s`;
+    const gd = `--pkb-gd:${glintDelay(c, n)}`;
     if (c === L.center)
       return `<div class="pkb-tile pkb-free pkb-on" style="${gd}"><span class="pkb-stamp">${esc(M.free)}</span></div>`;
     const it = L.items[L.itemCell.indexOf(c)];
     return (
       `<label class="pkb-tile" data-reach="${esc(M.reachBadge)}" style="${gd}">` +
-      `<input type="checkbox"><span class="pkb-emo" aria-hidden="true">${esc(it.emoji)}</span>` +
+      `${input}<span class="pkb-emo" aria-hidden="true">${esc(it.emoji)}</span>` +
       `<span class="pkb-lbl">${esc(it.label).replace(/・/g, "・<wbr>")}</span>` +
       `<span class="pkb-stamp" aria-hidden="true">${esc(M.stamp)}</span></label>`
     );
@@ -168,7 +213,9 @@ function template(L: Layout, M: Messages, demo: boolean) {
 <div class="pkb-combo" data-r="combo"><b data-r="cmbN"></b><span class="pkb-bar"><i data-r="cbar"></i></span></div></div></div>
 <div class="pkb-gw"><div class="pkb-grid">${tiles}</div><svg class="pkb-lines" aria-hidden="true"></svg>
 <div class="pkb-banner" data-r="banner" aria-hidden="true"><b data-r="bT"></b><span data-r="bS"></span></div></div>
-<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><button type="button" class="pkb-reset" data-r="reset">${esc(M.reset)}</button></div>
+<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><div class="pkb-acts">${
+    shuffle ? `<button type="button" class="pkb-shuf" data-r="shuf">${esc(M.shuffle)}</button>` : ""
+  }<button type="button" class="pkb-reset" data-r="reset">${esc(M.reset)}</button></div></div>
 <div class="pkb-flash" data-r="flash"></div>
 <div class="pkb-perfect" data-r="perfect"><div class="pkb-card" role="dialog" aria-label="${esc(M.perfectTitle)}">
 <div class="pkb-medal">${esc(M.perfectStamp)}</div><h3 class="pkb-ptitle">${esc(M.perfectTitle)}</h3><p class="pkb-pbody" data-r="pbody">${esc(perfectText(M, L.items.length))}</p>
@@ -191,13 +238,27 @@ interface Particle {
 /** Render a packing bingo card into `container`. Call only in the browser. */
 export function createPackingBingo(container: HTMLElement, options: PackingBingoOptions = {}): PackingBingoInstance {
   const L = resolveLayout(options);
-  const { items, lines, cellLines } = L;
+  const { items, cellLines } = L;
   const n = L.size, N = items.length;
   const normalize = (v: readonly boolean[] | undefined) => Array.from({ length: N }, (_, i) => !!v?.[i]);
+  // Squares that hold items are "slots" (row by row, skipping the FREE square); slot s is cell
+  // L.itemCell[s]. `order[s]` is the item in slot s, and `slotOf[i]` the slot of item i.
+  const identity = () => Array.from({ length: N }, (_, s) => s);
+  const isIdentity = (o: readonly number[]) => o.every((v, s) => v === s);
+  const validOrder = (o: unknown): o is number[] =>
+    Array.isArray(o) && o.length === N && o.every((v) => Number.isInteger(v) && v >= 0 && v < N) && new Set(o).size === N;
+  let order = identity();
+  const slotOf = identity();
+  /** The winning lines as item indices; they follow the items around when the card is shuffled. */
+  let lines = L.lines;
   // Demo start: the top row, plus the diagonal from the top left except its last square (a reach).
   const demoCells = [...cellLines[0], ...cellLines[2 * n].slice(1, -1)];
-  const demoItems = new Set(L.itemCell.flatMap((c, i) => (demoCells.includes(c) ? [i] : [])));
-  const demoStart = () => Array.from({ length: N }, (_, i) => demoItems.has(i));
+  const demoSlots = L.itemCell.flatMap((c, s) => (demoCells.includes(c) ? [s] : []));
+  const demoStart = () => {
+    const on = normalize(undefined);
+    demoSlots.forEach((s) => (on[order[s]] = true));
+    return on;
+  };
   /** Row + column of a cell: how far it is from the top left corner. */
   const far = (c: number) => Math.floor(c / n) + (c % n);
   /** Spacing scale (1 up to 4×4, smaller above), as in the --pk-d CSS variable. */
@@ -208,7 +269,10 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   if (options.subtitle != null) M.subtitle = options.subtitle;
   const controlled = !!options.controlled;
   const storageKey = resolveStorageKey(options);
+  // A prefix, not a suffix: a suffix could collide with another card's own key ("trip:order").
+  const orderKey = storageKey && ORDER_PREFIX + storageKey;
   const demo = !!options.demo;
+  const vibrate = options.vibrate !== false;
   const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // ---- lifecycle: every timer is tracked so destroy() can stop them ----
@@ -228,7 +292,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   let gen = 0;
 
   ensureStyles();
-  container.innerHTML = template(L, M, demo);
+  container.innerHTML = template(L, M, { demo, shuffle: options.shuffle !== false, vibrate });
   const $ = <T extends Element = HTMLElement>(r: string) => {
     const el = container.querySelector(`[data-r="${r}"]`);
     if (!el) throw new Error(`[packing-bingo] internal: missing element "${r}"`);
@@ -240,9 +304,9 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const svg = container.querySelector(".pkb-lines") as SVGSVGElement;
   const cv = container.querySelector(".pkb-fx") as HTMLCanvasElement;
   const ctx = cv.getContext("2d");
-  /** Every square in grid order, including the FREE one. */
+  /** Every square in grid order, including the FREE one. Rearranged when the card is shuffled. */
   const cellTiles = Array.from(grid.children) as HTMLElement[];
-  /** The square of each item. */
+  /** The square of each item (it moves with the item). */
   const tiles = L.itemCell.map((c) => cellTiles[c]);
   const freeTile = L.center >= 0 ? cellTiles[L.center] : null;
   const ins = tiles.map((t) => t.querySelector("input") as HTMLInputElement);
@@ -256,7 +320,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   let prevAll = false;
   let lastN = 0;
   let score = 0, shown = 0, combo = 0, maxCombo = 0, lastT = 0, gotP = false;
-  const got = new Set<number>(), gotL = new Set<number>();
+  /** Items and lines (by `lineKey`) that have earned their points. */
+  const got = new Set<number>(), gotL = new Set<string>();
 
   // ---- sound ----
   const storedMute = readStore(MUTE_KEY);
@@ -407,7 +472,9 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     t.appendChild(r);
     r.addEventListener("animationend", () => r.remove());
   };
+  // The Vibration API (Android). iPhones don't have it; they get the switch haptic on the tap itself.
   const buzz = (pattern: number | number[]) => {
+    if (!vibrate) return;
     const ua = (navigator as WithUserActivation).userActivation;
     if (ua && !ua.hasBeenActive) return; // vibration needs a prior user gesture
     try {
@@ -469,7 +536,13 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   const ctr = (t: HTMLElement) => {
     return { x: t.offsetLeft + t.offsetWidth / 2, y: t.offsetTop + t.offsetHeight / 2 };
   };
+  /** Set while the squares fly to new places after a shuffle; the lines are drawn when they land. */
+  let landing = 0;
   function drawLines(fresh: number[] = []) {
+    if (landing) {
+      svg.innerHTML = "";
+      return;
+    }
     svg.setAttribute("viewBox", `0 0 ${gw.clientWidth} ${gw.clientHeight}`);
     svg.innerHTML = cur
       .map((k) => {
@@ -488,6 +561,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       combo = 0;
       $("combo").classList.remove("pkb-on");
       sfx.off();
+      buzz(8);
       return;
     }
     const now = performance.now();
@@ -510,7 +584,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       $("cmbN").textContent = M.combo(combo);
       replay($("combo"), "pkb-on");
     }
-    buzz(12);
+    buzz(18);
   }
   $("cbar").addEventListener("animationend", () => {
     $("combo").classList.remove("pkb-on");
@@ -613,11 +687,14 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     perfectEl.classList.remove("pkb-show");
   }
 
+  /** The lines (indices into `lines`) whose items are all checked. */
+  const completeLines = () => lines.flatMap((l, k) => (l.every((i) => checked[i]) ? [k] : []));
+
   // ---- render the current `checked` state; `src` is the tapped square, if any ----
   function render(src: number | null, quiet: boolean): Pending[] {
     const events: Pending[] = [];
     const on = checked, c = on.filter(Boolean).length;
-    cur = lines.flatMap((l, k) => (l.every((i) => on[i]) ? [k] : []));
+    cur = completeLines();
     const fresh = cur.filter((k) => !prevLines.has(k));
     // A completed line was undone: whatever was still queued to celebrate it no longer applies.
     if ([...prevLines].some((k) => !cur.includes(k))) {
@@ -632,7 +709,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     }
     tiles.forEach((t, i) => {
       t.classList.toggle("pkb-on", on[i]);
-      t.classList.toggle("pkb-line", hit.has(L.itemCell[i]));
+      t.classList.toggle("pkb-line", hit.has(L.itemCell[slotOf[i]]));
       t.classList.toggle("pkb-reach", reach.has(i));
     });
     freeTile?.classList.toggle("pkb-line", hit.has(L.center));
@@ -650,8 +727,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     lastN = cur.length;
     drawLines(fresh);
     if (src !== null) tapFx(src, on[src]);
-    const newL = fresh.filter((k) => !gotL.has(k));
-    newL.forEach((k) => gotL.add(k));
+    const newL = fresh.map((k) => lineKey(lines[k])).filter((key) => !gotL.has(key));
+    newL.forEach((key) => gotL.add(key));
     const linePts = 100 * newL.length * newL.length;
     score += linePts; // earned now; the popup for it is only shown later
     if (quiet) {
@@ -705,8 +782,9 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     got.clear();
     gotL.clear();
     checked.forEach((v, i) => v && got.add(i));
-    lines.forEach((l, k) => l.every((i) => checked[i]) && gotL.add(k));
-    prevLines = new Set(gotL);
+    const done = completeLines();
+    done.forEach((k) => gotL.add(lineKey(lines[k])));
+    prevLines = new Set(done);
     prevReach = new Set();
     prevAll = checked.every(Boolean);
     gotP = prevAll;
@@ -732,6 +810,94 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     flush(events);
   }
 
+  // ---- arrangement (shuffle) ----
+  /** Put item `next[s]` in slot s: moves the squares in the DOM, so tab order follows the grid. */
+  function place(next: number[]) {
+    order = next;
+    order.forEach((i, s) => {
+      slotOf[i] = s;
+      cellTiles[L.itemCell[s]] = tiles[i];
+    });
+    lines = L.lines.map((l) => l.map((s) => order[s]));
+    const focused = document.activeElement;
+    cellTiles.forEach((t, c) => {
+      t.style.setProperty("--pkb-gd", glintDelay(c, n));
+      grid.appendChild(t);
+    });
+    // Moving a focused element drops its focus; keyboard users keep their place.
+    if (focused instanceof HTMLElement && grid.contains(focused) && document.activeElement !== focused)
+      focused.focus({ preventScroll: true });
+  }
+
+  const saveOrder = () => {
+    if (!orderKey) return;
+    // Save the original order too: deleting it would restore a custom defaultOrder on reload.
+    writeStore(orderKey, JSON.stringify(order));
+  };
+
+  let flights: Animation[] = [];
+  /** Rearrange the card, with the squares flying from where they were (unless motion is reduced). */
+  function arrange(next: number[]) {
+    // Queued celebrations (a bingo's hops, a demo run) would play on squares that have moved.
+    // On a complete card the only ones left belong to the perfect finale, which doesn't depend
+    // on where the squares are, so it plays on.
+    if (!checked.every(Boolean)) cancelFx();
+    const from = calm ? null : tiles.map((t) => t.getBoundingClientRect()); // mid-flight positions included
+    flights.forEach((a) => a.cancel());
+    flights = [];
+    place(next);
+    // Treat every line made entirely of previously packed items as already paid, even if an
+    // item was unchecked before shuffling. Otherwise uncheck → shuffle → recheck farms points.
+    lines.forEach((l) => {
+      if (l.every((i) => got.has(i))) gotL.add(lineKey(l));
+    });
+    // Lines the new arrangement completes count as done, with no points or celebrations.
+    const done = completeLines();
+    done.forEach((k) => gotL.add(lineKey(lines[k])));
+    prevLines = new Set(done);
+    render(null, true);
+    saveOrder();
+    if (!from || typeof Element.prototype.animate !== "function") return;
+    tiles.forEach((t, i) => {
+      const a = from[i], b = t.getBoundingClientRect();
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) + Math.abs(dy) < 1) return;
+      flights.push(
+        t.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: "none" }], {
+          duration: FLY_MS - 140,
+          delay: Math.random() * 140,
+          easing: "cubic-bezier(.3,1.25,.5,1)",
+          fill: "backwards",
+        }),
+      );
+    });
+    clearTimeout(landing);
+    landing = window.setTimeout(() => {
+      landing = 0;
+      flights = [];
+      if (!dead) drawLines(cur); // all of them draw in again
+    }, FLY_MS);
+    svg.innerHTML = "";
+  }
+
+  function shuffleCard() {
+    let next = order.slice();
+    do {
+      for (let s = N - 1; s > 0; s--) {
+        const r = Math.floor(Math.random() * (s + 1));
+        [next[s], next[r]] = [next[r], next[s]];
+      }
+    } while (next.every((v, s) => v === order[s]));
+    arrange(next);
+    sfx.shuffle();
+    buzz([10, 40, 10, 40, 10, 40, 24]);
+  }
+
+  /** Put every item back in its own square (part of starting over). */
+  const unshuffle = () => {
+    if (!isIdentity(order)) arrange(identity());
+  };
+
   grid.addEventListener("change", (e) => {
     const i = ins.indexOf(e.target as HTMLInputElement);
     if (i < 0) return;
@@ -739,7 +905,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     next[i] = !next[i];
     request(next, i);
   });
-  $("reset").addEventListener("click", () => request(normalize(undefined), null, { reset: true }));
+  container.querySelector('[data-r="shuf"]')?.addEventListener("click", shuffleCard);
+  $("reset").addEventListener("click", () => {
+    unshuffle();
+    request(normalize(undefined), null, { reset: true });
+  });
   $("close").addEventListener("click", () => perfectEl.classList.remove("pkb-show"));
   perfectEl.addEventListener("click", (e) => {
     if (e.target === perfectEl) perfectEl.classList.remove("pkb-show");
@@ -781,9 +951,24 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       void run(miss.map((i, k) => (k < miss.length - 1 ? { i, delay: 170, quiet: true } : { i, delay: 450 })));
     });
     $("dR").addEventListener("click", () => {
-      if (!busy) request(demoStart(), null, { reset: true });
+      if (busy) return;
+      unshuffle();
+      request(demoStart(), null, { reset: true });
     });
   }
+
+  // ---- initial arrangement: a saved shuffle, then defaultOrder ----
+  let startOrder: number[] | null = null;
+  if (orderKey) {
+    try {
+      const saved: unknown = JSON.parse(readStore(orderKey) ?? "null");
+      if (validOrder(saved)) startOrder = saved;
+    } catch {
+      /* ignore broken saved data */
+    }
+  }
+  if (!startOrder && validOrder(options.defaultOrder)) startOrder = options.defaultOrder.slice();
+  if (startOrder && !isIdentity(startOrder)) place(startOrder);
 
   // ---- initial state: saved progress, then defaultChecked, then the demo start ----
   let initial: boolean[] | null = null;
@@ -818,19 +1003,35 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       flush(apply(n, changed[0], false));
     },
     reset() {
-      if (!dead) request(normalize(undefined), null, { reset: true });
+      if (dead) return;
+      unshuffle();
+      request(normalize(undefined), null, { reset: true });
+    },
+    shuffle() {
+      if (!dead) shuffleCard();
     },
     refresh() {
       if (!dead) render(null, true);
     },
     getState() {
-      return { checked: checked.slice(), lines: cur.slice(), score, maxCombo, complete: checked.every(Boolean), size: n, free: L.free };
+      return {
+        checked: checked.slice(),
+        lines: cur.slice(),
+        score,
+        maxCombo,
+        complete: checked.every(Boolean),
+        size: n,
+        free: L.free,
+        order: order.slice(),
+      };
     },
     destroy() {
       if (dead) return;
       dead = true;
       timers.forEach((id) => clearTimeout(id));
       timers.clear();
+      clearTimeout(landing);
+      flights.forEach((a) => a.cancel());
       cancelAnimationFrame(raf);
       cancelAnimationFrame(tw);
       ro?.disconnect();
