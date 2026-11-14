@@ -15,13 +15,55 @@ export interface Messages {
   shuffle: string;
   soundOn: string;
   soundOff: string;
-  /** Volume reminder in the pre-play popup; an empty string hides it. */
+  /** The big line on the gray start screen over the card (with the `ready` option). */
+  readyTitle?: string;
+  /** A line under it; empty (not shown) by default. */
+  readyPrompt?: string;
+  /** Volume reminder on the start screen; an empty string hides it. */
   soundHint?: string;
   /** Android Do Not Disturb reminder; hidden when vibration is disabled or this is empty. */
   vibrationHint?: string;
-  /** Pre-play popup title and buttons. */
+  /** The "tap to start" cue on the start screen. */
+  readyTap?: string;
+  /** Shown after the 3, 2, 1 countdown, as the stopwatch starts. */
+  readyGo?: string;
+  /** Label of the stopwatch, read out by screen readers. */
+  time?: string;
+  /** Before the finishing time on the perfect card. */
+  statTime?: string;
+  /** Floats up with the points for the clear time (`speedBonus`). */
+  speedBonus?: (points: number) => string;
+  /** Label of the mode switch, read out by screen readers. */
+  modeLabel?: string;
+  /** The mode switch's choice for the normal card. */
+  modeNormal?: string;
+  /** The mode switch's choice for the infinite mode. */
+  modeInfinite?: string;
+  /** The big word that sweeps over the card when the normal mode is chosen. */
+  normalTitle?: string;
+  /** The line under it. */
+  normalSub?: string;
+  /** The big word that sweeps over the card when the infinite mode is chosen. */
+  infiniteTitle?: string;
+  /** The line under it, also shown in the start screen's badge in the infinite mode. */
+  infiniteSub?: string;
+  /** The rule, shown on the start screen in the infinite mode; an empty string hides it. */
+  infiniteRule?: string;
+  /** The button that ends an infinite game and shows its results. */
+  finish?: string;
+  /** Title of the infinite game's results. */
+  finishTitle?: string;
+  /** Text inside the round medal on those results; `\n` starts a new line. */
+  finishStamp?: string;
+  /** Before the time played on those results. */
+  finishTime?: string;
+  /** The results' button that starts a new infinite game. */
+  again?: string;
+  /** @deprecated Ignored since 0.6.0: the pre-play popup became the start screen (see `readyTitle`). */
   playTitle?: string;
+  /** @deprecated Ignored since 0.6.0. */
   playStart?: string;
+  /** @deprecated Ignored since 0.6.0. */
   playSkip?: string;
   stamp: string;
   /** Text on the FREE square in the center (with `free`). */
@@ -70,11 +112,27 @@ export const ja: Messages = {
   shuffle: "🔀 シャッフル",
   soundOn: "🔊 音あり",
   soundOff: "🔇 音なし",
-  soundHint: "端末の音量を上げてね。",
-  vibrationHint: "Androidで振動を楽しむには、おやすみモード（Do Not Disturb）をOFFにしてね。",
-  playTitle: "音と振動の準備はOK？",
-  playStart: "準備OK！はじめる",
-  playSkip: "このまま遊ぶ",
+  readyTitle: "Are you ready?",
+  readyPrompt: "",
+  soundHint: "端末の音量をMAXに",
+  vibrationHint: "おやすみモードをオフ",
+  readyTap: "タップでスタート",
+  readyGo: "START!",
+  time: "タイム",
+  statTime: "クリアタイム",
+  modeLabel: "モード",
+  modeNormal: "通常",
+  modeInfinite: "∞ 無限",
+  normalTitle: "NORMAL",
+  normalSub: "通常モード",
+  infiniteTitle: "INFINITE",
+  infiniteSub: "無限ビンゴ",
+  infiniteRule: "そろった列は消えて、また埋められる。何度でもビンゴ！",
+  finish: "🏁 FINISH",
+  finishTitle: "フィニッシュ！",
+  finishStamp: "∞",
+  finishTime: "プレイタイム",
+  again: "もう一度",
   stamp: "OK",
   free: "FREE",
   reachBadge: "リーチ",
@@ -85,14 +143,15 @@ export const ja: Messages = {
   bannerNth: (n) => `${n} ライン目！`,
   bannerMulti: (n) => `一気に ${n} ライン！`,
   statusStart: () => "",
-  statusLines: (lines, left) => `ビンゴ ${lines} ライン！ のこり ${left} こ`,
+  statusLines: () => "",
   statusReach: () => "",
-  statusDone: "🎉 パーフェクト！忘れ物ゼロで出発できます",
+  statusDone: "",
   perfectTag: "🏆 PERFECT",
   perfectStamp: "準備\n完了",
   perfectTitle: "パーフェクト！",
-  perfectBody: (n) => `${n}こ ぜんぶそろった！\n忘れ物ゼロで、いってらっしゃい！`,
+  perfectBody: "",
   perfectBonus: (n) => `PERFECT BONUS +${n}`,
+  speedBonus: (n) => `SPEED BONUS +${n.toLocaleString()}`,
   statScore: "SCORE",
   statCombo: "MAX COMBO",
   statLines: "BINGO",
@@ -117,11 +176,27 @@ export const en: Messages = {
   shuffle: "🔀 Shuffle",
   soundOn: "🔊 Sound on",
   soundOff: "🔇 Muted",
-  soundHint: "Turn up your device volume before playing.",
-  vibrationHint: "On Android, turn off Do Not Disturb to enjoy vibration.",
-  playTitle: "Ready for sound and vibration?",
-  playStart: "Ready! Let's play",
-  playSkip: "Play as is",
+  readyTitle: "Are you ready?",
+  readyPrompt: "",
+  soundHint: "Turn your volume to MAX",
+  vibrationHint: "Turn off Do Not Disturb",
+  readyTap: "Tap to start",
+  readyGo: "GO!",
+  time: "Time",
+  statTime: "Time",
+  modeLabel: "Mode",
+  modeNormal: "Normal",
+  modeInfinite: "∞ Infinite",
+  normalTitle: "NORMAL",
+  normalSub: "Normal mode",
+  infiniteTitle: "INFINITE",
+  infiniteSub: "Infinite bingo",
+  infiniteRule: "Completed lines clear, so you can fill them again. Bingo forever!",
+  finish: "🏁 FINISH",
+  finishTitle: "Finish!",
+  finishStamp: "∞",
+  finishTime: "Time played",
+  again: "Play again",
   stamp: "OK",
   free: "FREE",
   reachBadge: "REACH",
@@ -132,14 +207,15 @@ export const en: Messages = {
   bannerNth: (n) => `Line ${n}!`,
   bannerMulti: (n) => `${n} lines at once!`,
   statusStart: () => "",
-  statusLines: (lines, left) => `${lines} bingo line${lines === 1 ? "" : "s"}! ${left} to go`,
+  statusLines: () => "",
   statusReach: () => "",
-  statusDone: "🎉 Perfect! Nothing left behind.",
+  statusDone: "",
   perfectTag: "🏆 PERFECT",
   perfectStamp: "ALL\nSET",
   perfectTitle: "Perfect!",
-  perfectBody: (n) => `All ${n} packed!\nHave a great trip!`,
+  perfectBody: "",
   perfectBonus: (n) => `PERFECT BONUS +${n}`,
+  speedBonus: (n) => `SPEED BONUS +${n.toLocaleString()}`,
   statScore: "SCORE",
   statCombo: "MAX COMBO",
   statLines: "BINGO",

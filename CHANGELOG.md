@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0 (2026-11-15)
+
+### Added
+
+- Start screen: each game begins with a see-through dark layer over the whole card (the same as the results screen), with one panel that asks "Are you ready?" and lists the volume and Android Do Not Disturb reminders; the sound button stays usable above it. A tap (or Enter/Space) counts down 3, 2, 1 with beeps and Android vibration, then shows START! and starts a stopwatch next to the sound button. The stopwatch stops when the card is complete, and the perfect card shows the finishing time. `PerfectEvent.time` and `PackingBingoState.time` report it in milliseconds. Reset returns to the start screen. `ready: false` hides the start screen; the stopwatch then starts on the first tap. Demo buttons skip the countdown.
+- `uncheck` option (default `false`): `uncheck: true` lets a second tap, click or Space on a stamped square take the stamp off, as in 0.5.0.
+- Speed bonus with no ceiling: a timed first clear adds 1000 points per item per second (16 items in 20 s: 800; in 10 s: 1,600), so a faster run always scores higher. It floats up as SPEED BONUS on the perfect card, `PerfectEvent.speedBonus` reports it, and `speedBonus(items, ms)` is exported.
+- Optional message keys `speedBonus`, `readyTitle`, `readyPrompt`, `readyTap`, `readyGo`, `time` and `statTime`.
+- Infinite mode: a "通常 | ∞ 無限" (Normal | ∞ Infinite) switch in the header turns the card into an endless game on the same squares. Each completed line flips over and clears about a second after its bingo, so its squares and the line score again; the BINGO count keeps every line of the game, and there is no perfect card. The infinite game is never saved, calls no `onChange` (also on a controlled card), and leaves the packing checks alone: `setChecked` and controlled `checked` update them while it is shown, and switching back restores them and their arrangement. Each switch starts a new game. Reset restarts the infinite game.
+- Mode switch takeover: choosing ∞ sweeps a dark sky over the whole card with a spinning rainbow aurora, a rainbow ∞, INFINITE, a light beam and twinkling stars, a rising chime and an Android vibration; choosing Normal slams down an OK stamp. In the infinite mode the switch's thumb, the card's border and the start screen's panel turn rainbow, and the start screen shows an ∞ badge and the rule. The switch stays above the start screen, and the arrow keys move between its two choices. Reduced motion fades instead.
+- Infinite mode finish: a rainbow 🏁 FINISH button (only in the infinite mode, enabled while a game is running) ends the game. A due clear settles first, the stopwatch stops, and a rainbow-bordered results card opens at once with an ∞ medal, the time played, and SCORE, MAX COMBO and BINGO (lines completed) counting up, with a fanfare, confetti, three fireworks and an Android vibration. "Play again" starts a new infinite game; after closing, the finished board stays dimmed and locked (squares and shuffle) until reset or a mode switch. `onFinish` reports `{ score, maxCombo, lines, time }`; `finish()` on the instance and the React ref does the same as the button; `PackingBingoState.finished`; the `FinishEvent` type; optional message keys `finish`, `finishTitle`, `finishStamp`, `finishTime` and `again`.
+- Options `mode` (`"normal"` or `"infinite"`), `modeSwitch` (default `true`) and `onModeChange`; `setMode()` on the instance and the React ref (in React, changing `mode` switches the live card); `PackingBingoState.mode`, `.cleared` and `.packing` (the packing card's checks and arrangement while the infinite mode is shown); `BingoEvent.mode`; the `BingoMode` type; optional message keys `modeLabel`, `modeNormal`, `modeInfinite`, `normalTitle`, `normalSub`, `infiniteTitle`, `infiniteSub` and `infiniteRule`.
+
+### Changed
+
+- A stamped square now stays stamped: tapping, clicking or pressing Space on it again does nothing, and controlled cards get no `onChange` for it. Stamped squares get `aria-readonly="true"` and lose the pressed look. `reset()`, `setChecked` and controlled `checked` can still clear them. Pass `uncheck: true` for the 0.5.0 behavior.
+- The default `ja` and `en` messages leave the status line under the card (`statusLines`, `statusDone`) and the perfect card's body (`perfectBody`) empty, so neither is shown. Pass them in `messages` to bring them back.
+- The start screen replaces the 0.5.0 first-play dialog. `playTitle`, `playStart` and `playSkip` are deprecated and ignored; `soundHint` and `vibrationHint` now appear on the start screen.
+- TypeScript: `PackingBingoState` has the new required fields `time`, `mode`, `cleared`, `finished` and `packing`; `BingoEvent` has `mode`; `PerfectEvent` has `time` and `speedBonus`. Update state and event mocks when upgrading. All new `Messages` keys are optional.
+
+### Fixed
+
+- The results card takes keyboard focus as it opens. Its fade-in kept it hidden for the first frame, so the focus was dropped (it only landed after switching apps and back).
+
 ## 0.5.0 (2026-11-13)
 
 ### Added

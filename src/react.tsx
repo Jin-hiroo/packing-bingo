@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, type CSSProperties } from "react";
 import {
   createPackingBingo,
+  type BingoMode,
   type Messages,
   type PackingBingoInstance,
   type PackingBingoOptions,
@@ -22,6 +23,10 @@ export interface PackingBingoHandle {
   reset(): void;
   /** Move the items to random squares, as the 🔀 button does. Checks stay with their items. */
   shuffle(): void;
+  /** Switch between the packing card and the infinite mode, as the switch does (with its animation). */
+  setMode(mode: BingoMode): void;
+  /** End a running infinite game and show its results, as the 🏁 FINISH button does. */
+  finish(): void;
   /** Set the card. A one-item change plays like a tap; bigger jumps apply quietly. */
   setChecked(checked: readonly boolean[]): void;
   getState(): PackingBingoState | null;
@@ -35,11 +40,14 @@ type MessageKey = keyof Messages;
  */
 export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(function PackingBingo(props, ref) {
   // `fonts` is deprecated and ignored; leaving it out keeps it from forcing a rebuild.
-  const { checked, defaultChecked, defaultOrder, className, style, onChange, onBingo, onPerfect, messages, fonts: _fonts, ...config } = props;
+  // `mode` switches the live card (with its animation) instead of rebuilding it.
+  const { checked, defaultChecked, defaultOrder, className, style, onChange, onBingo, onPerfect, onModeChange, onFinish, mode, messages, fonts: _fonts, ...config } = props;
   const host = useRef<HTMLDivElement>(null);
   const inst = useRef<PackingBingoInstance | null>(null);
-  const callbacks = useRef({ onChange, onBingo, onPerfect });
-  callbacks.current = { onChange, onBingo, onPerfect };
+  const callbacks = useRef({ onChange, onBingo, onPerfect, onModeChange, onFinish });
+  callbacks.current = { onChange, onBingo, onPerfect, onModeChange, onFinish };
+  // The mode on the card, so a rebuild (new items, title, …) keeps the one the user switched to.
+  const latestMode = useRef(mode);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
   const controlled = checked !== undefined;
@@ -85,14 +93,22 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
       },
       onBingo: (e) => callbacks.current.onBingo?.(e),
       onPerfect: (e) => callbacks.current.onPerfect?.(e),
+      onFinish: (e) => callbacks.current.onFinish?.(e),
+      mode: latestMode.current,
+      onModeChange: (m) => {
+        latestMode.current = m;
+        callbacks.current.onModeChange?.(m);
+      },
     });
     inst.current = instance;
     return () => {
       // Keep the current checks (including ones set through the ref) for the next build, and
       // always record their key, so they can't be carried into another key later.
+      // In the infinite mode the card shows the game; the packing card is kept in `packing`.
       const state = instance.getState();
-      if (!controlled) latest.current = state.checked;
-      latestOrder.current = state.order;
+      const packed = state.packing ?? state;
+      if (!controlled) latest.current = packed.checked;
+      latestOrder.current = packed.order;
       latestKey.current = storageKey;
       instance.destroy();
       if (inst.current === instance) inst.current = null;
@@ -110,11 +126,17 @@ export const PackingBingo = forwardRef<PackingBingoHandle, PackingBingoProps>(fu
     if (controlled && checked) inst.current?.setChecked(checked, { animate: true });
   }, [controlled, checked]);
 
+  useEffect(() => {
+    if (mode) inst.current?.setMode(mode);
+  }, [mode]);
+
   useImperativeHandle(
     ref,
     () => ({
       reset: () => inst.current?.reset(),
       shuffle: () => inst.current?.shuffle(),
+      setMode: (m) => inst.current?.setMode(m),
+      finish: () => inst.current?.finish(),
       setChecked: (next) => inst.current?.setChecked(next, { animate: true }),
       getState: () => inst.current?.getState() ?? null,
     }),

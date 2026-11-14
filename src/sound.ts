@@ -10,6 +10,12 @@ export interface Sound {
   tick(): void;
   note(step: number, at?: number): void;
   shuffle(): void;
+  /** A countdown beep; `go` is the higher, longer start signal after 3, 2, 1. */
+  count(go: boolean): void;
+  /** The mode switch: a shimmering rise for the infinite mode, a stamp for the normal one. */
+  mode(infinite: boolean): void;
+  /** Completed lines clearing in the infinite mode (`squares` is how many lift off). */
+  clear(squares: number): void;
   stop(): void;
   close(): void;
 }
@@ -153,6 +159,39 @@ export function createSound(isMuted: () => boolean): Sound {
       for (let i = 0; i < 7; i++) noise(i * 0.042, 0.05, 0.16, 1600 + i * 260);
       tone(hz(7), 0.34, 0.12, "triangle", 0.14);
       tone(hz(12), 0.42, 0.2, "triangle", 0.14);
+    },
+    count(go) {
+      if (go) {
+        tone(hz(12), 0, 0.5, "square", 0.07);
+        tone(hz(24), 0, 0.5, "triangle", 0.14);
+        noise(0, 0.2, 0.12, 3000);
+      } else {
+        tone(hz(5), 0, 0.14, "square", 0.07);
+        tone(hz(17), 0, 0.14, "triangle", 0.12);
+      }
+    },
+    mode(infinite) {
+      if (infinite) {
+        // A riser under a fast two-octave pentatonic sweep, then a bright held chord with air.
+        tone(196, 0, 0.42, "sine", 0.12, 784);
+        [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24].forEach((s, i) => tone(hz(s - 12), i * 0.032, 0.16, "triangle", 0.07));
+        [12, 16, 19, 24].forEach((s) => tone(hz(s), 0.38, 1.1, "sine", 0.07));
+        tone(hz(31), 0.38, 0.9, "triangle", 0.03);
+        noise(0, 0.5, 0.07, 6500);
+        noise(0.36, 0.7, 0.05, 9000);
+      } else {
+        // The stamp coming down: a short lift, then a low thump with a crisp edge.
+        tone(hz(7), 0, 0.1, "square", 0.05);
+        tone(hz(0), 0.1, 0.28, "triangle", 0.14);
+        tone(160, 0.1, 0.2, "sine", 0.26, 55);
+        noise(0.1, 0.12, 0.14, 1400);
+      }
+    },
+    clear(squares) {
+      // Glassy notes falling back down the scale, one per square (up to eight).
+      const n = Math.max(1, Math.min(8, squares));
+      for (let i = 0; i < n; i++) tone(step(SCALE.length - 1 - i * 2), i * 0.035, 0.18, "sine", 0.07);
+      noise(0, 0.3, 0.08, 7000);
     },
     stop,
     close() {
