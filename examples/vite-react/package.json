@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "packing-bingo": "^0.5.0",
+    "packing-bingo": "^0.6.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

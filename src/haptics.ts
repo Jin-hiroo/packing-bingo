@@ -2,7 +2,7 @@
 // iOS uses the real switch input's system haptic instead (see core's template).
 let owner: object | null = null;
 
-export type HapticMoment = "tap" | "off" | "reach" | "bingo" | "perfect" | "shuffle";
+export type HapticMoment = "tap" | "off" | "reach" | "bingo" | "perfect" | "shuffle" | "count" | "go" | "infinite" | "normal" | "finish";
 
 export function createHaptics(enabled: boolean) {
   const token = {};
@@ -39,6 +39,12 @@ export function createHaptics(enabled: boolean) {
           : [lead, 40, 500]) :
         moment === "reach" ? [140, 40, 240] :
         moment === "shuffle" ? [90, 35, 90, 35, 220] :
+        moment === "count" ? 60 :
+        moment === "go" ? 260 :
+        // Switching modes: a quick rising flutter into a hold, or one firm stamp.
+        moment === "infinite" ? [25, 30, 35, 30, 45, 30, 220] :
+        moment === "normal" ? [50, 70, 160] :
+        moment === "finish" ? [120, 40, 120, 40, 320] :
         tier ? [100 + tier * 20, 15, 80 + tier * 20] : 90;
       if (!send(pattern)) return;
       // Only this play may add synchronized beats. A newer action, stop, or another
