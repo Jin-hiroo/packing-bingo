@@ -18,7 +18,7 @@ export const LINES: readonly (readonly number[])[] = bingoLines(4);
 
 /**
  * "normal": the packing card. "infinite": an endless game on the same squares; completed lines
- * clear so they can be filled again. It never touches the packing checks.
+ * lose two random stamps so they can be filled again. It never touches the packing checks.
  */
 export type BingoMode = "normal" | "infinite";
 
@@ -159,8 +159,8 @@ export interface PackingBingoOptions {
   uncheck?: boolean;
   /**
    * The mode to start in (default "normal"). "infinite" is an endless game on the same squares:
-   * every completed line clears after its celebration, so it can be filled again, and the
-   * score keeps growing. It neither changes nor saves the packing checks, and calls no
+   * every completed line loses two random stamps after its celebration, so it can be filled
+   * again, and the score keeps growing. It neither changes nor saves the packing checks, and calls no
    * `onChange`; switching back to "normal" brings the packing card back as it was.
    */
   mode?: BingoMode;
@@ -267,6 +267,20 @@ export function speedBonus(items: number, ms: number) {
 const FLY_MS = 560;
 /** Infinite mode: completed lines clear this long after the winning tap (after the banner lands). */
 const CLEAR_MS = 1000;
+/**
+ * Infinite mode: how many stamps a clear takes off, at random, from the squares of the complete
+ * lines. More come off when that is what it takes to break every complete line.
+ */
+const CLEAR_COUNT = 2;
+/** A copy of `xs` in random order. */
+function shuffled<T>(xs: readonly T[]) {
+  const a = xs.slice();
+  for (let s = a.length - 1; s > 0; s--) {
+    const r = Math.floor(Math.random() * (s + 1));
+    [a[s], a[r]] = [a[r], a[s]];
+  }
+  return a;
+}
 /** Sparkle colors for the infinite mode (the combo palette plus white). */
 const SPARK = ["#FFFFFF", "#FFE066", "#FF9F1C", "#E8473B", "#9B5DE5", "#2F6FED", "#1FA971"];
 
@@ -970,15 +984,32 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   }
 
   /**
-   * Infinite mode: take the stamps off the squares of the complete lines (`pending`), so they can
-   * be filled and scored again. `animate` flips them over; without it (a hidden tab, a shuffle)
-   * they clear at once.
+   * Infinite mode: the stamps a clear takes off. One random square of each complete line that is
+   * still whole, so none is left complete, then random squares of those lines up to CLEAR_COUNT.
+   */
+  function pickClears() {
+    const full = completeLines();
+    const gone = new Set<number>();
+    for (const k of shuffled(full)) {
+      if (lines[k].every((i) => !gone.has(i))) gone.add(shuffled(lines[k])[0]);
+    }
+    for (const i of shuffled([...new Set(full.flatMap((k) => lines[k]))])) {
+      if (gone.size >= CLEAR_COUNT) break;
+      gone.add(i);
+    }
+    return [...gone];
+  }
+
+  /**
+   * Infinite mode: take a few stamps (`pickClears`) off the squares of the complete lines, so
+   * every line is open again and its squares can be filled and scored again. `animate` flips them
+   * over; without it (a hidden tab, a shuffle) they clear at once.
    */
   function clearNow(animate: boolean) {
     clearTimeout(clearTimer);
     clearTimer = 0;
     if (!pending.size) return;
-    const gone = [...pending].filter((i) => checked[i]);
+    const gone = pickClears();
     pending.clear();
     checked = checked.slice();
     gone.forEach((i) => {
@@ -986,7 +1017,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       ins[i].checked = false;
       got.delete(i);
     });
-    // Every complete line was pending, so none is left; the same items can earn a line again.
+    // Every complete line lost a stamp, so none is left; the same items can earn a line again.
     gotL.clear();
     const left = completeLines();
     left.forEach((k) => gotL.add(lineKey(lines[k])));

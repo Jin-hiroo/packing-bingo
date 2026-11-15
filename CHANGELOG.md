@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Infinite mode: a completed line no longer clears all of its stamps. About a second after its bingo, two random stamps of the line flip over and come off, and the rest stay, so the line is open again after two more taps. When several lines complete at once, more stamps come off if two would leave a line complete. The default `infiniteRule` messages say so.
+
 ## 0.6.0 (2026-11-15)
 
 ### Added
