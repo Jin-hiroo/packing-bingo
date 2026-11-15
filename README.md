@@ -9,7 +9,7 @@
 [![TypeScript types included](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white)](#api)
 [![Standalone single HTML file](https://img.shields.io/badge/standalone-single%20HTML%20file-E34F26?logo=html5&logoColor=white)](#単体のページ)
 
-[デモサイト](https://jin-hiroo.github.io/packing-bingo/) · [v0.6.0 Release](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.6.0) · [クイックスタート](#クイックスタート) · [デモコード](#デモ) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
+[デモサイト](https://jin-hiroo.github.io/packing-bingo/) · [v0.7.0 Release](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.7.0) · [クイックスタート](#クイックスタート) · [デモコード](#デモ) · [使い方の例](#使い方の例) · [API](#api) · [組み込むときの注意](#組み込むときの注意) · [Reactなしで使う](#reactなしで使う) · [English](#english) · [変更履歴](CHANGELOG.md)
 
 <p align="center">
   <a href="docs/images/bingo-desktop.png"><img src="docs/images/bingo-desktop.png" alt="持ち物が並んだ4×4のビンゴカード。一番上の列に続いて、左上からのナナメの列がそろった瞬間で、大きなBINGO!の文字、「2 ライン目！」、+100の得点、紙吹雪が出ている。上の欄には8/16、2ライン、290点、2 COMBOと表示されている。" width="560"></a>
@@ -61,13 +61,24 @@ _0.6.0の無限ビンゴ。左から、切り替えたときの演出、そろ�
 | 保存 | localStorageだけ。進み具合、シャッフルした並び、音のオン・オフの設定 |
 | ブラウザ | Chrome・Edge 105以上、Safari 16以上、Firefox 121以上。今のところChromiumでしか試していません（[詳しく](#対応ブラウザと確認済みの範囲)） |
 
-## 0.6.0へアップデート
+## 0.7.0へアップデート
 
 ```sh
 npm install packing-bingo@latest
 ```
 
-0.6.0では、次のものを追加しました。
+0.7.0では、[無限ビンゴモード](#無限ビンゴモード)を遊びやすくしました。
+
+- **列は一部だけ消えます：** そろった列は、約0.2秒後にランダムな3マスだけがすばやく裏返って消えます（0.6.0では約1秒後に列のすべて）。残りのスタンプはそのままなので、あと3マスでまたビンゴです。
+- **スタンプが少しずつ消えます：** ビンゴしなくても、押してから1秒以上たったスタンプのどれかが、1秒ごとに1つ消えます。
+- **フィーバー：** 100コンボごとに、5秒間得点が2倍になります。`messages` の `feverTitle`・`feverSub` で文字を変えられます。
+- **リセットボタンの代わりにFINISH：** 無限ビンゴのあいだはリセットボタンが出ず、🏁 FINISHボタンが代わりに出ます。終えたあとはFINISHボタンが「リセット」に変わります。`ref.reset()` はいつでも使えます。
+
+0.6.0から更新するときに、コードを変える必要はありません。既定の `infiniteRule` の文章は、新しいルールの説明に変わっています。
+
+### 0.6.0で追加したもの
+
+0.5.xから更新する場合は、0.6.0の次の変更も入ります。
 
 - **[無限ビンゴモード](#無限ビンゴモード)：** そろった列が消えて何度でもビンゴできるモードです。切り替えるとカード全体の演出が出て、🏁 FINISHで終えると結果画面が出ます。
 - **[スタート画面とストップウォッチ](#スタート画面とストップウォッチ)：** 3・2・1のカウントダウンで始まるタイムアタックです。
@@ -168,7 +179,7 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
 ```html
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
 <div id="packing-bingo"></div>
-<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.6/dist/packing-bingo.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/packing-bingo@0.7/dist/packing-bingo.global.js"></script>
 <script>
   PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
     items: [
@@ -611,7 +622,9 @@ npm run typecheck
 
 Packing Bingo is a React component that turns a school-trip packing checklist into a bingo card, with combos, fanfares and fireworks. Cards are 4×4 by default; `size` makes them anything from 2×2 to 10×10, and `free` puts a FREE square in the center of an odd-sized card. Progress is saved in each student's browser automatically. A 🔀 button moves the items to random squares (checks move with their items, and the arrangement is saved too; `shuffle={false}` hides it). Taps buzz on phones: through the Vibration API on Android, and with the system tap haptic of a `switch` checkbox on iPhone (iOS 18+); `vibrate={false}` turns both off. A stamped square stays stamped when tapped again; `uncheck` lets a second tap take the stamp off. A "Normal | ∞ Infinite" switch in the header (`modeSwitch={false}` hides it; `mode`, `onModeChange` and `ref.setMode()` control it) plays a full-card takeover with an aurora and ∞, and turns the card into an endless game: each completed line loses three random stamps about 0.2 seconds after its bingo (more if several lines completed at once), so it can be filled and scored again. A random stamp also fades every second without a bingo, and every 100 combo starts a 5-second fever of double points. The infinite game is never saved and calls no `onChange`; switching back shows the packing card as it was. A 🏁 FINISH button (or `ref.finish()`) ends an infinite game with a results card (score, max combo, lines, time played; `onFinish`) and a "Play again" button. In the infinite mode it takes the reset button's place and turns into Reset once the game is over. It has no runtime dependencies, makes no network requests, and is safe to render on the server (it ships with `"use client"`). It does not load its web fonts either: add the Google Fonts `<link>` from the quick start to the page's `<head>` to get them.
 
-Version 0.6.0 adds the infinite mode and its FINISH results card, and replaces the 0.5.0 first-play dialog with a start screen: a see-through dark layer over the whole card (the same as the results screen) with an "Are you ready?" panel with the volume and Do Not Disturb reminders. A tap counts down 3, 2, 1 and starts a stopwatch that stops when the card is complete; `ready={false}` skips the screen and the first tap starts the clock, and `onPerfect` and `getState()` report `time` in milliseconds. A timed first clear earns a speed bonus with no ceiling. When upgrading from 0.5.0, note that a stamped square now stays stamped (`uncheck` brings back the old toggle), the status line under the card and the perfect card's body are empty by default, and `PackingBingoState`, `BingoEvent` and `PerfectEvent` have new required fields (update hand-written mocks). Android vibration strength is device-dependent and has not been verified on hardware. See the [v0.6.0 release notes](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.6.0) and the [changelog](CHANGELOG.md).
+Version 0.7.0 reworks the infinite mode: a completed line now loses only three random stamps about 0.2 seconds after its bingo (all of them after about a second in 0.6.0), a random stamp fades every second without a bingo, every 100 combo starts a 5-second fever of double points (`feverTitle` and `feverSub` messages), and 🏁 FINISH takes the reset button's place and turns into Reset once the game is over (`ref.reset()` still works at any time). Upgrading from 0.6.0 needs no code changes. See the [v0.7.0 release notes](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.7.0) and the [changelog](CHANGELOG.md).
+
+Version 0.6.0 added the infinite mode and its FINISH results card, and replaces the 0.5.0 first-play dialog with a start screen: a see-through dark layer over the whole card (the same as the results screen) with an "Are you ready?" panel with the volume and Do Not Disturb reminders. A tap counts down 3, 2, 1 and starts a stopwatch that stops when the card is complete; `ready={false}` skips the screen and the first tap starts the clock, and `onPerfect` and `getState()` report `time` in milliseconds. A timed first clear earns a speed bonus with no ceiling. When upgrading from 0.5.0, note that a stamped square now stays stamped (`uncheck` brings back the old toggle), the status line under the card and the perfect card's body are empty by default, and `PackingBingoState`, `BingoEvent` and `PerfectEvent` have new required fields (update hand-written mocks). Android vibration strength is device-dependent and has not been verified on hardware. See the [v0.6.0 release notes](https://github.com/Jin-hiroo/packing-bingo/releases/tag/v0.6.0) and the [changelog](CHANGELOG.md).
 
 ```sh
 npm install packing-bingo
