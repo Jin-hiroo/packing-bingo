@@ -16,6 +16,12 @@ export interface Sound {
   mode(infinite: boolean): void;
   /** Completed lines clearing in the infinite mode (`squares` is how many lift off). */
   clear(squares: number): void;
+  /** One stamp coming off by itself in the infinite mode (no bingo). */
+  fade(): void;
+  /** The fever starting (double points): a riser into a big chord and a boom. */
+  fever(): void;
+  /** The fever running out. */
+  feverEnd(): void;
   stop(): void;
   close(): void;
 }
@@ -192,6 +198,25 @@ export function createSound(isMuted: () => boolean): Sound {
       const n = Math.max(1, Math.min(8, squares));
       for (let i = 0; i < n; i++) tone(step(SCALE.length - 1 - i * 2), i * 0.035, 0.18, "sine", 0.07);
       noise(0, 0.3, 0.08, 7000);
+    },
+    fade() {
+      tone(hz(19), 0, 0.12, "sine", 0.05, hz(7));
+      noise(0, 0.08, 0.03, 6000);
+    },
+    fever() {
+      // A sawtooth riser under a three-octave sweep, then a fat chord on a sub drop with a crash.
+      tone(110, 0, 0.5, "sawtooth", 0.07, 880);
+      [0, 4, 7, 12, 16, 19, 24, 28, 31, 36].forEach((s, i) => tone(hz(s - 12), i * 0.038, 0.14, "square", 0.055));
+      [0, 4, 7, 12].forEach((s) => tone(hz(s), 0.42, 1.1, "triangle", 0.11));
+      [12, 16, 19, 24].forEach((s) => tone(hz(s), 0.42, 1.1, "sawtooth", 0.03));
+      tone(110, 0.42, 0.7, "sine", 0.3, 32);
+      noise(0.42, 0.7, 0.26, 800);
+      noise(0.42, 1.0, 0.07, 9000);
+      [0, 0.14, 0.28].forEach((at) => tone(hz(36), 0.6 + at, 0.1, "triangle", 0.06));
+    },
+    feverEnd() {
+      [24, 19, 16, 12, 7].forEach((s, i) => tone(hz(s), i * 0.055, 0.16, "triangle", 0.08));
+      noise(0, 0.25, 0.05, 5000);
     },
     stop,
     close() {

@@ -362,11 +362,67 @@ try {
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
   for (const i of [1, 2, 3, 4, 8, 12, 0]) await check(i);
   assert.equal((await state()).lines.length, 2);
-  await page.waitForTimeout(1250);
+  await page.waitForTimeout(450); // before any stamp is a second old (see below)
   s = await state();
   const kept = s.checked.flatMap((c, i) => (c ? [i] : []));
   assert.deepEqual([s.lines, s.cleared, kept.length], [[], 2, 4], 'a double bingo loses three stamps');
   assert.ok(kept.every((i) => [0, 1, 2, 3, 4, 8, 12].includes(i)));
+  // Stamps also come off without a bingo: every second, one random stamp that is at least a second old.
+  await page.evaluate(() => { card.destroy(); bingos = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite', onBingo: e => bingos.push(e) }); });
+  await check(0);
+  await check(5);
+  await page.waitForTimeout(700);
+  assert.equal((await state()).checked.filter(Boolean).length, 2, 'no stamp comes off before it is a second old');
+  await page.waitForTimeout(550);
+  s = await state();
+  assert.deepEqual([s.checked.filter(Boolean).length, s.lines, await page.evaluate(() => bingos.length)], [1, [], 0], 'one stamp came off without a bingo');
+  await visibility(true);
+  await page.waitForTimeout(1200);
+  assert.equal((await state()).checked.filter(Boolean).length, 1, 'nothing comes off while the tab is hidden');
+  await visibility(false);
+  await page.waitForTimeout(250);
+  assert.equal((await state()).checked.filter(Boolean).length, 0, 'and it goes on when the tab is back');
+  // Every 100 combo: 5 seconds of double points, with its own look, sound and buzz.
+  const FEVER_BUZZ = [50, 40, 60, 30, 80, 25, 110, 30, 450];
+  const lineGain = (pts, mult) => [0, 1, 2, 3, 4].map((k) => 100 * k * k * mult).includes(pts);
+  /** Tap free squares (waiting for clears when the card is full) until `n` taps; returns the last tap's gain. */
+  const tapFree = (n) => page.evaluate(async (n) => {
+    let gain = 0;
+    for (let taps = 0; taps < n; ) {
+      const free = [...document.querySelectorAll('#app input')].find((x) => !x.checked);
+      if (free) {
+        const a = card.getState().score;
+        free.click();
+        gain = card.getState().score - a;
+        taps++;
+      }
+      if (taps < n) await new Promise((r) => setTimeout(r, 25));
+    }
+    return gain;
+  }, n);
+  const fever = () => page.locator('#app .pkb-board.pkb-fever').count();
+  await page.evaluate(() => { card.destroy(); buzzes = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
+  await tapFree(99);
+  assert.deepEqual([(await state()).maxCombo, await fever()], [99, 0], 'no fever before 100 combo');
+  let gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10 * 100 * 2, 2), `the 100th tap scores double (${gain})`);
+  assert.equal(await fever(), 1);
+  assert.equal(await page.locator('#app [data-r="fvSr"]').textContent(), 'FEVER! 5秒間ポイント2倍！');
+  assert.deepEqual((await patterns()).at(-1), FEVER_BUZZ, 'the fever has its own buzz');
+  gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10 * 101 * 2, 2), `taps in the fever score double (${gain})`);
+  await page.waitForTimeout(5100);
+  assert.deepEqual([await fever(), await page.locator('#app [data-r="fvSr"]').textContent()], [0, ''], 'the fever ends after 5 seconds');
+  gain = await tapFree(1); // the combo broke while waiting
+  assert.ok(lineGain(gain - 10, 1), `points are back to normal (${gain})`);
+  // A hidden tab (like a new game or a mode switch) ends a fever at once.
+  await tapFree(99);
+  assert.equal(await fever(), 1, 'every 100 combo');
+  await visibility(true);
+  assert.equal(await fever(), 0);
+  await visibility(false);
+  gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10, 1), `no double points after it (${gain})`);
   // A controlled card plays the infinite game by itself, without asking the parent.
   await page.evaluate(() => { card.destroy(); changes = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, controlled: true, mode: 'infinite', onChange: c => changes.push(c) }); });
   await check(0);
@@ -460,7 +516,7 @@ try {
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, modeSwitch: false }); });
   assert.equal(await page.locator('#app .pkb-mode').count(), 0);
   assert.deepEqual(errors, []);
-  console.log('PASS: start screen, countdown and stopwatch; stamps stay stamped (uncheck: true opts out); infinite mode and the mode switch; feedback patterns, combo, ownership, reset/shuffle/destroy, controlled keyboard, reduced motion, layouts, winning stamp, and persistent perfect results; no browser errors.');
+  console.log('PASS: start screen, countdown and stopwatch; stamps stay stamped (uncheck: true opts out); infinite mode, its fading stamps and fever, and the mode switch; feedback patterns, combo, ownership, reset/shuffle/destroy, controlled keyboard, reduced motion, layouts, winning stamp, and persistent perfect results; no browser errors.');
 }
 finally {
   await browser.close();

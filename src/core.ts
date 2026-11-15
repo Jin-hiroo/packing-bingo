@@ -272,6 +272,18 @@ const CLEAR_MS = 200;
  * lines. More come off when that is what it takes to break every complete line.
  */
 const CLEAR_COUNT = 3;
+/**
+ * Infinite mode: stamps also come off without a bingo. Every this long, one random stamp that is
+ * at least this old flips over and comes off (never one that is about to clear with its line).
+ */
+const DECAY_MS = 1000;
+/** Infinite mode: every FEVER_EVERY combo starts FEVER_MS of FEVER_MULT times the points. */
+const FEVER_EVERY = 100;
+const FEVER_MS = 5000;
+const FEVER_MULT = 2;
+const FEVER_EMOJI = ["🔥", "✨", "💎", "⭐", "🎉", "💥"];
+/** How long the FEVER! title is on screen (.pkb-fv-bn in the CSS); a bingo then shows no banner. */
+const FEVER_BANNER_MS = 1600;
 /** A copy of `xs` in random order. */
 function shuffled<T>(xs: readonly T[]) {
   const a = xs.slice();
@@ -355,7 +367,7 @@ function template(L: Layout, M: Messages, { demo, shuffle, vibrate, ready, modes
 <div class="pkb-side"><div class="pkb-score">
 <div class="pkb-pill"><small>${esc(M.packed)}</small><b data-r="cnt"></b></div>
 <div class="pkb-pill" data-r="bp"><small>${esc(M.bingo)}</small><b data-r="bng"></b></div>
-<div class="pkb-pill pkb-sc" data-r="sp"><small>${esc(M.score)}</small><b data-r="sc">0</b></div></div>
+<div class="pkb-pill pkb-sc" data-r="sp"><small>${esc(M.score)}</small><b data-r="sc">0</b><span class="pkb-fv-x" aria-hidden="true">×${FEVER_MULT}</span><span class="pkb-fv-bar" aria-hidden="true"><i></i></span></div></div>
 <div class="pkb-combo" data-r="combo"><b data-r="cmbN"></b><span class="pkb-bar"><i data-r="cbar"></i></span></div></div></div>
 <div class="pkb-gw"><div class="pkb-grid">${tiles}</div><svg class="pkb-lines" aria-hidden="true"></svg>
 <div class="pkb-banner" data-r="banner" aria-hidden="true"><b data-r="bT"></b><span data-r="bS"></span></div></div>
@@ -368,6 +380,9 @@ function template(L: Layout, M: Messages, { demo, shuffle, vibrate, ready, modes
 <p class="pkb-ptime" data-r="ptime" hidden><small data-r="pTl">${esc(M.statTime?.trim() || ja.statTime!)}</small><b data-r="pT"></b></p>
 <div class="pkb-stats"><div><small>${esc(M.statScore)}</small><b data-r="sScore">0</b></div><div><small>${esc(M.statCombo)}</small><b data-r="sCombo">×0</b></div><div><small>${esc(M.statLines)}</small><b data-r="sBingo">0</b></div></div>
 <div class="pkb-pbtns"><button type="button" class="pkb-close pkb-again" data-r="again" hidden>${esc(M.again?.trim() || ja.again!)}</button><button type="button" class="pkb-close" data-r="close">${esc(M.close)}</button></div></div></div>
+<div class="pkb-fv" data-r="fv"><i class="pkb-fv-glow" aria-hidden="true"></i>` +
+    `<div class="pkb-fv-bn" aria-hidden="true"><b>${esc(M.feverTitle?.trim() || ja.feverTitle!)}</b><span>${esc(M.feverSub?.trim() || ja.feverSub!)}</span></div>` +
+    `<span class="pkb-fv-sr" data-r="fvSr" role="status"></span></div>
 <canvas class="pkb-fx"></canvas>${readyScreen}<div class="pkb-mfx" data-r="mfx" aria-hidden="true"></div></div>${demoBar}</div>`;
 }
 
@@ -488,6 +503,14 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   let score = 0, shown = 0, combo = 0, maxCombo = 0, lastT = 0, gotP = false;
   /** Items and lines (by `lineKey`) that have earned their points. */
   const got = new Set<number>(), gotL = new Set<string>();
+  /** Infinite mode: when each item was last stamped, and when the next stamp may come off (DECAY_MS). */
+  const stampAt = items.map(() => 0);
+  let decayAt = 0;
+  /** Infinite mode: the fever (FEVER_MS of FEVER_MULT times the points) runs until `feverUntil`. */
+  let feverAt = 0, feverUntil = 0, feverTimer = 0, feverSpark = 0;
+  const feverOn = () => performance.now() < feverUntil;
+  /** What points are multiplied by right now. */
+  const mult = () => (feverOn() ? FEVER_MULT : 1);
 
   // ---- sound ----
   const storedMute = readStore(MUTE_KEY);
@@ -548,17 +571,18 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     };
     drop();
   }
-  function emojiRain(ms: number) {
+  /** Emoji falling from the top: the items' own, or `pool`; a shorter `every` drops them faster. */
+  function emojiRain(ms: number, pool?: readonly string[], every = 110) {
     if (calm) return;
     const end = performance.now() + ms;
     const drop = () => {
       const p = piece(Math.random() * BW, -30, (Math.random() - 0.5) * 1.5, 1.5 + Math.random() * 2, 0.05, 1, 500, "emoji");
-      p.e = items[(Math.random() * items.length) | 0].emoji;
+      p.e = pool ? pool[(Math.random() * pool.length) | 0] : items[(Math.random() * items.length) | 0].emoji;
       p.w = 22 + Math.random() * 12;
       p.vr = (Math.random() - 0.5) * 0.06;
       P.push(p);
       go();
-      if (performance.now() < end) later(drop, 110);
+      if (performance.now() < end) later(drop, every);
     };
     drop();
   }
@@ -747,7 +771,11 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     t0 = performance.now();
     finalMs = null;
     clearInterval(watchTimer);
-    watchTimer = window.setInterval(showWatch, 100);
+    decayAt = t0 + DECAY_MS;
+    watchTimer = window.setInterval(() => {
+      showWatch();
+      decay();
+    }, 100);
     watch.classList.remove("pkb-done");
     watch.classList.add("pkb-run");
     showWatch();
@@ -867,6 +895,9 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     const impactAt = Math.min(70 * seqLength, 300) + 60;
     const beat = haptics.play(moment, combo, fresh.length, impactAt);
     perfectBeat = moment === "perfect" ? beat : undefined;
+    // After the tap's own buzz, so the fever's takes over; the tap that gets there scores double.
+    if (inf() && combo % FEVER_EVERY === 0) startFever();
+    const x = mult();
     const energy = Math.min(3, Math.floor(combo / 3));
     sfx.pop(combo - 1);
     if (!calm) {
@@ -876,10 +907,14 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       ring(tiles[i]);
     }
     burst(p.x, p.y, 18 + energy * 6, { speed: 6 + energy, g: 0.2, life: 30, size: 0.6, star: 0.5 });
+    if (x > 1) {
+      burst(p.x, p.y, 26, { speed: 9, g: 0.12, life: 40, size: 0.8, star: 0.7, colors: SPARK });
+      sfx.note(10 + (combo % 6), 0.03);
+    }
     if (!got.has(i)) {
       got.add(i);
-      score += 10 * combo;
-      showGain(10 * combo, p.x, p.y - 12);
+      score += 10 * combo * x;
+      showGain(10 * combo * x, p.x, p.y - 12, x > 1 ? "fv" : "pt");
     }
     if (combo >= 2) {
       floatText(M.comboPop(combo), p.x, p.y + 22, "cmb", 90, COMBO_COLORS[(combo - 2) % COMBO_COLORS.length]);
@@ -903,6 +938,49 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     later(() => sfx.reach(), 150);
   }
 
+  /** Infinite mode: FEVER_MS of FEVER_MULT times the points, with everything the card has. */
+  function startFever() {
+    feverAt = performance.now();
+    feverUntil = feverAt + FEVER_MS;
+    clearTimeout(feverTimer);
+    feverTimer = window.setTimeout(() => endFever(true), FEVER_MS);
+    replay($("fv"), "pkb-on");
+    $("banner").classList.remove("pkb-show"); // an earlier bingo's banner would sit under the title
+    // Replayed, so the ×2 bar on the score starts full again.
+    board.style.setProperty("--pkb-fv-ms", FEVER_MS + "ms");
+    replay(board, "pkb-fever");
+    $("fvSr").textContent = `${M.feverTitle?.trim() || ja.feverTitle!} ${M.feverSub?.trim() || ja.feverSub!}`;
+    sfx.fever();
+    haptics.play("fever");
+    if (!calm) {
+      replay($("flash"), "pkb-go");
+      replay(board, "pkb-shake");
+    }
+    burst(0, BH, 70, { angle: -Math.PI / 3, spread: 0.8, speed: 20, g: 0.3, star: 0.6, colors: SPARK });
+    burst(BW, BH, 70, { angle: (-Math.PI * 2) / 3, spread: 0.8, speed: 20, g: 0.3, star: 0.6, colors: SPARK });
+    [0, 260, 520].forEach((at) => later(() => firework(BW * (0.15 + Math.random() * 0.7), BH * (0.15 + Math.random() * 0.3)), at));
+    rain(1400);
+    emojiRain(FEVER_MS - 800, FEVER_EMOJI, 140);
+    // Sparks keep popping around the card until the fever ends.
+    clearInterval(feverSpark);
+    feverSpark = window.setInterval(() => {
+      if (dead || document.hidden) return;
+      burst(Math.random() * BW, Math.random() * BH, 16, { speed: 5, g: 0.05, life: 40, size: 0.7, star: 0.9, colors: SPARK });
+    }, 260);
+  }
+  /** Stop the fever (its time is up, or the game stops); `fanfare` plays its closing notes. */
+  function endFever(fanfare: boolean) {
+    feverUntil = 0;
+    clearTimeout(feverTimer);
+    clearInterval(feverSpark);
+    feverTimer = feverSpark = 0;
+    if (!board.classList.contains("pkb-fever")) return;
+    board.classList.remove("pkb-fever");
+    $("fv").classList.remove("pkb-on");
+    $("fvSr").textContent = "";
+    if (fanfare && !dead) sfx.feverEnd();
+  }
+
   /** `total` is the line count for the banner ("3 ライン目！"). */
   function bingo(fresh: number[], pts: number, total: number) {
     const nl = fresh.length;
@@ -920,7 +998,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     later(() => {
       $("bT").textContent = nl >= 3 ? M.bannerTriple : nl === 2 ? M.bannerDouble : M.bannerSingle;
       $("bS").textContent = nl > 1 ? M.bannerMulti(nl) : M.bannerNth(total);
-      replay($("banner"), "pkb-show");
+      // The FEVER! title is still sweeping in: one big word at a time.
+      if (!feverAt || performance.now() - feverAt > FEVER_BANNER_MS) replay($("banner"), "pkb-show");
       if (!calm) {
         replay($("flash"), "pkb-go");
         replay(board, "pkb-punch");
@@ -1048,6 +1127,32 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       if (!dead) clearNow(true);
     }, ms);
   }
+  /**
+   * Infinite mode, on the stopwatch's tick: take one random stamp off, bingo or not (DECAY_MS).
+   * Only stamps at least DECAY_MS old, and never the squares of a complete line (they clear).
+   */
+  function decay() {
+    const now = performance.now();
+    if (!inf() || phase !== "play" || document.hidden || now < decayAt) return;
+    const old = checked.flatMap((v, i) => (v && !pending.has(i) && now - stampAt[i] >= DECAY_MS ? [i] : []));
+    if (!old.length) return; // try again on the next tick
+    decayAt = now + DECAY_MS;
+    const i = old[(Math.random() * old.length) | 0];
+    checked = checked.slice();
+    checked[i] = false;
+    ins[i].checked = false;
+    got.delete(i);
+    render(null, true);
+    sfx.fade();
+    const t = tiles[i];
+    if (!calm) {
+      t.style.setProperty("--pkb-cd", "0ms");
+      t.classList.remove("pkb-squash", "pkb-hop");
+      replay(t, "pkb-clr");
+    }
+    const p = rel(t);
+    burst(p.x, p.y, 7, { speed: 3.5, g: 0.06, life: 40, size: 0.65, star: 1, colors: SPARK.slice(1) });
+  }
   /** Forget a clear that is due (the card is starting over). */
   const dropClear = () => {
     clearTimeout(clearTimer);
@@ -1087,6 +1192,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
 
   /** Also wipe effects already on screen (used when a new game starts). */
   function clearVisuals(keepPerfect = false) {
+    endFever(false);
     P = [];
     cancelAnimationFrame(raf);
     raf = 0;
@@ -1171,7 +1277,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     }
     const newL = fresh.map((k) => lineKey(lines[k])).filter((key) => !gotL.has(key));
     newL.forEach((key) => gotL.add(key));
-    const linePts = 100 * newL.length * newL.length;
+    const linePts = 100 * newL.length * newL.length * mult();
     score += linePts; // earned now; the popup for it is only shown later
     if (quiet) {
       if (linePts) countScore();
@@ -1211,6 +1317,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     if (phase === "idle" && src !== null && next[src]) startWatch();
     if (!inf() && next.every(Boolean)) finish();
     checked = next;
+    if (src !== null && next[src]) stampAt[src] = performance.now();
     ins.forEach((x, i) => (x.checked = checked[i]));
     const events = render(src, quiet);
     save();
@@ -1707,6 +1814,8 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
       timers.clear();
       clearTimeout(landing);
       clearTimeout(clearTimer);
+      clearTimeout(feverTimer);
+      clearInterval(feverSpark);
       flights.forEach((a) => a.cancel());
       cancelAnimationFrame(raf);
       cancelAnimationFrame(tw);
