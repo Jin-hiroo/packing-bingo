@@ -376,6 +376,16 @@ try {
   await page.waitForTimeout(550);
   s = await state();
   assert.deepEqual([s.checked.filter(Boolean).length, s.lines, await page.evaluate(() => bingos.length)], [1, [], 0], 'one stamp came off without a bingo');
+  const faded = s.checked[0] ? 5 : 0;
+  const before0 = s.score;
+  await page.evaluate((i) => document.querySelectorAll('#app input')[i].click(), faded);
+  assert.ok((await state()).score > before0, 'a faded square scores again');
+  // Again from two stamps, one of which has come off: the other must wait while the tab is hidden.
+  await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
+  await check(0);
+  await check(5);
+  await page.waitForTimeout(1250);
+  assert.equal((await state()).checked.filter(Boolean).length, 1);
   await visibility(true);
   await page.waitForTimeout(1200);
   assert.equal((await state()).checked.filter(Boolean).length, 1, 'nothing comes off while the tab is hidden');
@@ -387,8 +397,8 @@ try {
   const lineGain = (pts, mult) => [0, 1, 2, 3, 4].map((k) => 100 * k * k * mult).includes(pts);
   /** Tap free squares (waiting for clears when the card is full) until `n` taps; returns the last tap's gain. */
   const tapFree = (n) => page.evaluate(async (n) => {
-    let gain = 0;
-    for (let taps = 0; taps < n; ) {
+    let gain = 0, taps = 0;
+    for (let tries = 0; taps < n && tries < 4000; tries++) {
       const free = [...document.querySelectorAll('#app input')].find((x) => !x.checked);
       if (free) {
         const a = card.getState().score;
@@ -398,6 +408,7 @@ try {
       }
       if (taps < n) await new Promise((r) => setTimeout(r, 25));
     }
+    if (taps < n) throw new Error(`only ${taps} of ${n} taps found a free square`);
     return gain;
   }, n);
   const fever = () => page.locator('#app .pkb-board.pkb-fever').count();
@@ -408,6 +419,7 @@ try {
   assert.ok(lineGain(gain - 10 * 100 * 2, 2), `the 100th tap scores double (${gain})`);
   assert.equal(await fever(), 1);
   assert.equal(await page.locator('#app [data-r="fvSr"]').textContent(), 'FEVER! 5秒間ポイント2倍！');
+  assert.deepEqual(await page.locator('#app .pkb-float.pkb-x2').last().evaluate((e) => [getComputedStyle(e).visibility, getComputedStyle(e).position, e.textContent]), ['visible', 'absolute', '+2000'], 'the doubled points float up, visible');
   assert.deepEqual((await patterns()).at(-1), FEVER_BUZZ, 'the fever has its own buzz');
   gain = await tapFree(1);
   assert.ok(lineGain(gain - 10 * 101 * 2, 2), `taps in the fever score double (${gain})`);

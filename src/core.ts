@@ -914,7 +914,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     if (!got.has(i)) {
       got.add(i);
       score += 10 * combo * x;
-      showGain(10 * combo * x, p.x, p.y - 12, x > 1 ? "fv" : "pt");
+      showGain(10 * combo * x, p.x, p.y - 12, x > 1 ? "x2" : "pt"); // not "fv": that is the fever layer
     }
     if (combo >= 2) {
       floatText(M.comboPop(combo), p.x, p.y + 22, "cmb", 90, COMBO_COLORS[(combo - 2) % COMBO_COLORS.length]);
