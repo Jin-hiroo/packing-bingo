@@ -18,7 +18,7 @@ export const LINES: readonly (readonly number[])[] = bingoLines(4);
 
 /**
  * "normal": the packing card. "infinite": an endless game on the same squares; completed lines
- * lose two random stamps so they can be filled again. It never touches the packing checks.
+ * lose three random stamps so they can be filled again. It never touches the packing checks.
  */
 export type BingoMode = "normal" | "infinite";
 
@@ -159,7 +159,7 @@ export interface PackingBingoOptions {
   uncheck?: boolean;
   /**
    * The mode to start in (default "normal"). "infinite" is an endless game on the same squares:
-   * every completed line loses two random stamps after its celebration, so it can be filled
+   * every completed line loses three random stamps after its celebration, so it can be filled
    * again, and the score keeps growing. It neither changes nor saves the packing checks, and calls no
    * `onChange`; switching back to "normal" brings the packing card back as it was.
    */
@@ -271,7 +271,7 @@ const CLEAR_MS = 400;
  * Infinite mode: how many stamps a clear takes off, at random, from the squares of the complete
  * lines. More come off when that is what it takes to break every complete line.
  */
-const CLEAR_COUNT = 2;
+const CLEAR_COUNT = 3;
 /** A copy of `xs` in random order. */
 function shuffled<T>(xs: readonly T[]) {
   const a = xs.slice();
