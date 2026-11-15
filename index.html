@@ -264,7 +264,7 @@ SET`,perfectTitle:"Perfect!",perfectBody:"",perfectBonus:r=>`PERFECT BONUS +${r}
 <div class="pkb-combo" data-r="combo"><b data-r="cmbN"></b><span class="pkb-bar"><i data-r="cbar"></i></span></div></div></div>
 <div class="pkb-gw"><div class="pkb-grid">${C}</div><svg class="pkb-lines" aria-hidden="true"></svg>
 <div class="pkb-banner" data-r="banner" aria-hidden="true"><b data-r="bT"></b><span data-r="bS"></span></div></div>
-<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><div class="pkb-acts"><button type="button" class="pkb-finbtn" data-r="fin" disabled>${u(n.finish?.trim()||w.finish)}</button>${m?`<button type="button" class="pkb-shuf" data-r="shuf">${u(n.shuffle)}</button>`:""}<button type="button" class="pkb-reset" data-r="reset">${u(n.reset)}</button></div></div>
+<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><div class="pkb-acts">${m?`<button type="button" class="pkb-shuf" data-r="shuf">${u(n.shuffle)}</button>`:""}<button type="button" class="pkb-finbtn" data-r="fin" disabled>${u(n.finish?.trim()||w.finish)}</button><button type="button" class="pkb-reset" data-r="reset">${u(n.reset)}</button></div></div>
 <div class="pkb-flash" data-r="flash"></div>
 <div class="pkb-perfect" data-r="perfect"><div class="pkb-card" data-r="pcard" role="dialog" aria-label="${u(n.perfectTitle)}">
 <div class="pkb-medal" data-r="medal">${u(n.perfectStamp)}</div><h3 class="pkb-ptitle" data-r="ptitle">${u(n.perfectTitle)}</h3><p class="pkb-pbody" data-r="pbody">${u(ea(n,r.items.length))}</p>

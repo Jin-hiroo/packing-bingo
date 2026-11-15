@@ -371,9 +371,9 @@ function template(L: Layout, M: Messages, { demo, shuffle, vibrate, ready, modes
 <div class="pkb-combo" data-r="combo"><b data-r="cmbN"></b><span class="pkb-bar"><i data-r="cbar"></i></span></div></div></div>
 <div class="pkb-gw"><div class="pkb-grid">${tiles}</div><svg class="pkb-lines" aria-hidden="true"></svg>
 <div class="pkb-banner" data-r="banner" aria-hidden="true"><b data-r="bT"></b><span data-r="bS"></span></div></div>
-<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><div class="pkb-acts"><button type="button" class="pkb-finbtn" data-r="fin" disabled>${esc(M.finish?.trim() || ja.finish!)}</button>${
+<div class="pkb-foot"><span data-r="msg" aria-live="polite"></span><div class="pkb-acts">${
     shuffle ? `<button type="button" class="pkb-shuf" data-r="shuf">${esc(M.shuffle)}</button>` : ""
-  }<button type="button" class="pkb-reset" data-r="reset">${esc(M.reset)}</button></div></div>
+  }<button type="button" class="pkb-finbtn" data-r="fin" disabled>${esc(M.finish?.trim() || ja.finish!)}</button><button type="button" class="pkb-reset" data-r="reset">${esc(M.reset)}</button></div></div>
 <div class="pkb-flash" data-r="flash"></div>
 <div class="pkb-perfect" data-r="perfect"><div class="pkb-card" data-r="pcard" role="dialog" aria-label="${esc(M.perfectTitle)}">
 <div class="pkb-medal" data-r="medal">${esc(M.perfectStamp)}</div><h3 class="pkb-ptitle" data-r="ptitle">${esc(M.perfectTitle)}</h3><p class="pkb-pbody" data-r="pbody">${esc(perfectText(M, L.items.length))}</p>
