@@ -301,7 +301,7 @@ try {
   assert.equal(s.score, 10 + 20 + 30 + 40 + 100);
   assert.equal(await page.evaluate(() => bingos.at(-1).mode), 'infinite');
   assert.equal(await page.locator('#app .pkb-lock').count(), 4, 'squares about to clear stay stamped');
-  await page.waitForTimeout(850); // the clear comes about 0.6 s after the bingo
+  await page.waitForTimeout(650); // the clear comes about 0.4 s after the bingo
   s = await state();
   assert.deepEqual([s.lines, s.cleared, s.complete], [[], 1, false], 'the line opened');
   const left = s.checked.flatMap((c, i) => (c ? [i] : []));
@@ -352,7 +352,7 @@ try {
   await check(4);
   assert.deepEqual((await state()).lines, [1], 'a line through the FREE center');
   for (const i of [0, 2, null, null]) {
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(150);
     if (i !== null) await check(i); // neither completes a line
     await page.evaluate(() => card.refresh());
   }
@@ -395,7 +395,7 @@ try {
   assert.deepEqual([await fin.isVisible(), await fin.isDisabled()], [true, true], 'FINISH waits for the game to start');
   for (const i of [0, 1, 2, 3, 5]) await check(i);
   assert.equal(await fin.isDisabled(), false);
-  await page.waitForTimeout(300); // the row is still about to clear
+  await page.waitForTimeout(100); // the row is still about to clear
   await fin.click();
   s = await state();
   const fe = await page.evaluate(() => fins[0]);
