@@ -265,8 +265,8 @@ export function speedBonus(items: number, ms: number) {
 
 /** How long the squares take to fly to their new places on a shuffle (including the stagger). */
 const FLY_MS = 560;
-/** Infinite mode: completed lines clear this long after the winning tap (after the banner lands). */
-const CLEAR_MS = 1000;
+/** Infinite mode: completed lines clear this long after the winning tap (just after the banner lands). */
+const CLEAR_MS = 600;
 /**
  * Infinite mode: how many stamps a clear takes off, at random, from the squares of the complete
  * lines. More come off when that is what it takes to break every complete line.

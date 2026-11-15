@@ -301,7 +301,7 @@ try {
   assert.equal(s.score, 10 + 20 + 30 + 40 + 100);
   assert.equal(await page.evaluate(() => bingos.at(-1).mode), 'infinite');
   assert.equal(await page.locator('#app .pkb-lock').count(), 4, 'squares about to clear stay stamped');
-  await page.waitForTimeout(1250);
+  await page.waitForTimeout(850); // the clear comes about 0.6 s after the bingo
   s = await state();
   assert.deepEqual([s.lines, s.cleared, s.complete], [[], 1, false], 'the line opened');
   const left = s.checked.flatMap((c, i) => (c ? [i] : []));
