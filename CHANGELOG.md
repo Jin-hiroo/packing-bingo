@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Infinite mode: a completed line no longer clears all of its stamps. About 0.4 seconds after its bingo (1 second in 0.6.0), three random stamps of the line flip over and come off (all of them on a line of three or fewer), and the rest stay, so the line is open again after three more taps. When several lines complete at once, more stamps come off if three would leave a line complete. The default `infiniteRule` messages say so.
+- Infinite mode: a completed line no longer clears all of its stamps. About 0.2 seconds after its bingo (1 second in 0.6.0), three random stamps of the line flip over, faster than before, and come off (all of them on a line of three or fewer), and the rest stay, so the line is open again after three more taps. When several lines complete at once, more stamps come off if three would leave a line complete. The default `infiniteRule` messages say so.
 
 ## 0.6.0 (2026-11-15)
 

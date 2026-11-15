@@ -265,8 +265,8 @@ export function speedBonus(items: number, ms: number) {
 
 /** How long the squares take to fly to their new places on a shuffle (including the stagger). */
 const FLY_MS = 560;
-/** Infinite mode: completed lines clear this long after the winning tap (as the BINGO banner lands). */
-const CLEAR_MS = 400;
+/** Infinite mode: completed lines clear this long after the winning tap (the BINGO banner still shows). */
+const CLEAR_MS = 200;
 /**
  * Infinite mode: how many stamps a clear takes off, at random, from the squares of the complete
  * lines. More come off when that is what it takes to break every complete line.
@@ -1029,7 +1029,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     gone.forEach((i, j) => {
       const t = tiles[i];
       if (!calm) {
-        t.style.setProperty("--pkb-cd", Math.min(j * 28, 280) + "ms");
+        t.style.setProperty("--pkb-cd", Math.min(j * 18, 180) + "ms");
         t.classList.remove("pkb-squash", "pkb-hop");
         replay(t, "pkb-clr");
       }

@@ -170,7 +170,7 @@ export const CSS = `
 .pkb.pkb-inf .pkb-ready-in{border-color:transparent;background:linear-gradient(var(--pk-paper),var(--pk-paper)) padding-box,linear-gradient(120deg,#FF9F1C,#E8473B 22%,#9B5DE5 45%,#2F6FED 68%,#1FA971 88%,#FF9F1C) border-box;box-shadow:0 0 0 2px var(--pk-ink),0 0 32px rgba(155,93,229,.5)}
 .pkb.pkb-inf .pkb-ready-b{display:inline-block;margin-bottom:10px;padding:4px 14px 3px;border-radius:999px;background:linear-gradient(90deg,#FF9F1C,#E8473B,#9B5DE5,#2F6FED,#1FA971,#FF9F1C) 0 0/200% 100%;color:#fff;font-weight:800;font-size:13px;line-height:1.4;letter-spacing:.08em;text-shadow:0 1px 1px rgba(42,31,20,.5);box-shadow:0 0 14px rgba(155,93,229,.55);animation:pkb-rb 2.4s linear infinite}
 .pkb.pkb-inf .pkb-ready-r{display:block;margin-top:8px;font-weight:800;font-size:15px;line-height:1.5;word-break:auto-phrase}
-.pkb-tile.pkb-clr{animation:pkb-clr .62s var(--pkb-cd,0ms) both}
+.pkb-tile.pkb-clr{animation:pkb-clr .38s var(--pkb-cd,0ms) both}
 @keyframes pkb-clr{0%{transform:perspective(600px) rotateY(0);animation-timing-function:cubic-bezier(.55,0,.9,.45)}42%{transform:perspective(600px) rotateY(90deg) scale(.9)}42.01%{transform:perspective(600px) rotateY(-90deg) scale(.9);animation-timing-function:cubic-bezier(.2,1.45,.4,1)}100%{transform:perspective(600px) rotateY(0)}}
 .pkb-mfx{position:absolute;inset:0;z-index:14;display:grid;place-items:center;overflow:hidden;border-radius:inherit;pointer-events:none;visibility:hidden;opacity:0;text-align:center}
 .pkb-mfx.pkb-show{visibility:visible;animation:pkb-mfx 1.7s ease-out forwards}
