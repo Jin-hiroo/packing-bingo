@@ -439,7 +439,7 @@ try {
   await page.evaluate(() => { card.destroy(); changes = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, controlled: true, mode: 'infinite', onChange: c => changes.push(c) }); });
   await check(0);
   assert.deepEqual([(await state()).checked[0], await page.evaluate(() => changes.length)], [true, 0]);
-  // The switch stays usable above the start screen; reset starts a new infinite game.
+  // The switch stays usable above the start screen; reset() starts a new infinite game.
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, mode: 'infinite' }); });
   assert.equal(await page.locator('#app .pkb-ready-b').isVisible(), true, 'the start screen shows the infinite badge');
   assert.equal(await page.locator('#app .pkb-ready-r').isVisible(), true, 'and the rule');
@@ -449,7 +449,8 @@ try {
   await page.locator('#app .pkb-ready').click();
   await page.waitForTimeout(3100);
   await check(0);
-  await page.locator('#app [data-r="reset"]').click();
+  assert.deepEqual([await page.locator('#app [data-r="reset"]').isVisible(), await page.locator('#app [data-r="fin"]').textContent()], [false, '🏁 FINISH'], 'one button in the infinite mode: FINISH while playing');
+  await page.evaluate(() => card.reset());
   s = await state();
   assert.deepEqual([s.mode, s.checked.some(Boolean), s.score, s.time], ['infinite', false, 0, 0]);
   assert.equal(await page.locator('#app .pkb-ready:not([hidden])').count(), 1);
@@ -474,7 +475,8 @@ try {
   assert.equal(await page.locator('#app .pkb-perfect.pkb-show.pkb-fin').count(), 1, 'the results open at once');
   assert.equal(await page.locator('#app [data-r="ptitle"]').textContent(), 'フィニッシュ！');
   assert.equal(await page.evaluate(() => document.activeElement.dataset.r), 'again');
-  assert.deepEqual([await page.locator('#app .pkb-grid[inert]').count(), await fin.isDisabled(), await page.locator('#app [data-r="shuf"]').isDisabled()], [1, true, true], 'the finished board is locked');
+  assert.deepEqual([await page.locator('#app .pkb-grid[inert]').count(), await page.locator('#app [data-r="shuf"]').isDisabled()], [1, true], 'the finished board is locked');
+  assert.deepEqual([await fin.textContent(), await fin.isDisabled()], ['リセット', false], 'FINISH turns into reset');
   const order0 = s.order;
   await page.evaluate(() => card.shuffle());
   await page.waitForTimeout(300);
@@ -488,6 +490,13 @@ try {
   s = await state();
   assert.deepEqual([s.mode, s.finished, s.score, s.cleared, s.checked.some(Boolean), s.time], ['infinite', false, 0, 0, false, 0], 'play again starts a new infinite game');
   assert.deepEqual([await page.locator('#app .pkb-perfect.pkb-show').count(), await page.locator('#app .pkb-grid[inert]').count()], [0, 0]);
+  // Or close the results and press the リセット that FINISH turned into.
+  await check(0);
+  await fin.click();
+  await page.locator('#app [data-r="close"]').click();
+  await fin.click();
+  s = await state();
+  assert.deepEqual([s.finished, s.checked.some(Boolean), s.score, s.time, await fin.textContent(), await fin.isDisabled()], [false, false, 0, 0, '🏁 FINISH', true], 'the reset after FINISH starts a new game');
   // FINISH, then back to the packing card: it must be playable again, partial or complete.
   for (const packed of [[3, 7], Array.from({ length: 16 }, (_, i) => i)]) {
     const complete = packed.length === 16;

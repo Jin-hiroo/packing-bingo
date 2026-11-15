@@ -784,10 +784,18 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
   /** 🏁 FINISH works only while an infinite game is running. */
   const finBtn = $<HTMLButtonElement>("fin");
   const shufBtn = container.querySelector<HTMLButtonElement>('[data-r="shuf"]');
+  const finLabel = M.finish?.trim() || ja.finish!;
+  /**
+   * The infinite mode has one button for both (its reset button is hidden): 🏁 FINISH while a
+   * game runs (disabled until it starts), then リセット once it is over.
+   */
   const syncFin = () => {
-    finBtn.disabled = !(inf() && phase === "play");
+    const over = inf() && phase === "done";
+    finBtn.classList.toggle("pkb-redo", over);
+    finBtn.textContent = over ? M.reset : finLabel;
+    finBtn.disabled = !(inf() && (phase === "play" || over));
     // A finished infinite game stays as it ended, so it can't be shuffled either.
-    if (shufBtn) shufBtn.disabled = inf() && phase === "done";
+    if (shufBtn) shufBtn.disabled = over;
   };
   /** The card is complete: stop the stopwatch, or drop a start screen that is still up. */
   function finish() {
@@ -1494,11 +1502,13 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     request(normalize(undefined), null, { reset: true });
   });
   $("close").addEventListener("click", () => perfectEl.classList.remove("pkb-show"));
-  $("again").addEventListener("click", () => {
+  /** "Play again" on the results, and the リセット that FINISH turns into: a new infinite game. */
+  const playAgain = () => {
     if (!inf()) return;
     restartInfinite();
     (readyEl && !readyEl.hidden ? readyEl : grid.querySelector("input"))?.focus({ preventScroll: true });
-  });
+  };
+  $("again").addEventListener("click", playAgain);
 
   /**
    * End a running infinite game: settle a due clear, stop the stopwatch, lock the squares and
@@ -1550,7 +1560,7 @@ export function createPackingBingo(container: HTMLElement, options: PackingBingo
     const e = { score, maxCombo, lines: cleared, time: Math.round(finalMs) };
     options.onFinish?.(e);
   }
-  finBtn.addEventListener("click", finishGame);
+  finBtn.addEventListener("click", () => (inf() && phase === "done" ? playAgain() : finishGame()));
   perfectEl.addEventListener("click", (e) => {
     if (e.target === perfectEl) perfectEl.classList.remove("pkb-show");
   });

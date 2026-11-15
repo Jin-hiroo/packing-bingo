@@ -206,6 +206,8 @@ export const CSS = `
 @keyframes pkb-up{from{opacity:0;transform:translateY(12px)}}
 .pkb-finbtn{display:none;appearance:none;flex:none;border:2px solid var(--pk-ink);border-radius:999px;padding:5px 14px;font-weight:800;font-size:12px;line-height:1.4;letter-spacing:.04em;color:#fff;text-shadow:0 1px 1px rgba(42,31,20,.55);background:linear-gradient(90deg,#FF9F1C,#E8473B,#9B5DE5,#2F6FED,#1FA971,#FF9F1C) 0 0/200% 100%;box-shadow:2px 2px 0 var(--pk-ink),0 0 12px rgba(155,93,229,.45);cursor:pointer;animation:pkb-rb 2.4s linear infinite}
 .pkb.pkb-inf .pkb-finbtn{display:inline-block}
+.pkb.pkb-inf .pkb-reset{display:none}
+.pkb-finbtn.pkb-redo{padding:5px 12px;letter-spacing:0;color:var(--pk-ink);text-shadow:none;background:transparent;box-shadow:none;animation:none}
 .pkb-finbtn:active:not(:disabled){transform:translate(2px,2px);box-shadow:none}
 .pkb-finbtn:disabled{cursor:default;opacity:.4;animation:none;box-shadow:2px 2px 0 var(--pk-ink)}
 .pkb-board.pkb-over .pkb-grid{opacity:.55;filter:saturate(.5);transition:opacity .4s,filter .4s}
