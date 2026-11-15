@@ -49,6 +49,10 @@ export interface Messages {
   infiniteSub?: string;
   /** The rule, shown on the start screen in the infinite mode; an empty string hides it. */
   infiniteRule?: string;
+  /** The big word when a fever (double points, every 100 combo in the infinite mode) starts. */
+  feverTitle?: string;
+  /** The line under it. */
+  feverSub?: string;
   /** The button that ends an infinite game and shows its results. */
   finish?: string;
   /** Title of the infinite game's results. */
@@ -127,7 +131,9 @@ export const ja: Messages = {
   normalSub: "通常モード",
   infiniteTitle: "INFINITE",
   infiniteSub: "無限ビンゴ",
-  infiniteRule: "そろった列は消えて、また埋められる。何度でもビンゴ！",
+  infiniteRule: "スタンプは1秒ごとにどこか1つ消えて、そろった列は3つ消える。100コンボごとに5秒間ポイント2倍！",
+  feverTitle: "FEVER!",
+  feverSub: "5秒間ポイント2倍！",
   finish: "🏁 FINISH",
   finishTitle: "フィニッシュ！",
   finishStamp: "∞",
@@ -191,7 +197,9 @@ export const en: Messages = {
   normalSub: "Normal mode",
   infiniteTitle: "INFINITE",
   infiniteSub: "Infinite bingo",
-  infiniteRule: "Completed lines clear, so you can fill them again. Bingo forever!",
+  infiniteRule: "A stamp fades every second and completed lines lose three. Every 100 combo: double points for 5 seconds!",
+  feverTitle: "FEVER!",
+  feverSub: "Double points for 5 seconds!",
   finish: "🏁 FINISH",
   finishTitle: "Finish!",
   finishStamp: "∞",

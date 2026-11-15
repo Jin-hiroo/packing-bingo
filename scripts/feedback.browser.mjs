@@ -264,7 +264,7 @@ try {
   await check(0);
   assert.equal(await page.evaluate(() => card.getState().checked[0]), false);
   assert.equal(await page.locator('#app .pkb-lock').count(), 0);
-  // Infinite mode: completed lines clear after their celebration; the packing card is untouched.
+  // Infinite mode: completed lines lose three random stamps after their celebration; the packing card is untouched.
   await page.evaluate(() => {
     card.destroy(); buzzes = []; window.changes = []; window.modes = []; window.bingos = []; window.perfects = []; window.writes = [];
     const data = { k: JSON.stringify(Array.from({ length: 16 }, (_, i) => i === 5)) };
@@ -301,19 +301,22 @@ try {
   assert.equal(s.score, 10 + 20 + 30 + 40 + 100);
   assert.equal(await page.evaluate(() => bingos.at(-1).mode), 'infinite');
   assert.equal(await page.locator('#app .pkb-lock').count(), 4, 'squares about to clear stay stamped');
-  await page.waitForTimeout(1250);
+  await page.waitForTimeout(450); // the clear comes about 0.2 s after the bingo
   s = await state();
-  assert.deepEqual([s.lines, s.checked.some(Boolean), s.cleared, s.complete], [[], false, 1, false], 'the line cleared');
+  assert.deepEqual([s.lines, s.cleared, s.complete], [[], 1, false], 'the line opened');
+  const left = s.checked.flatMap((c, i) => (c ? [i] : []));
+  assert.equal(left.length, 1, 'three random stamps came off');
+  assert.ok(left.every((i) => i < 4), 'only from the completed line');
   assert.equal(await page.locator('#app [data-r="bng"]').textContent(), '1', 'BINGO keeps counting cleared lines');
   const before = s.score;
   for (const i of [0, 1, 2, 3]) await check(i);
   s = await state();
-  assert.ok(s.score >= before + 4 * 10 + 100, 'the same squares and line score again');
+  assert.ok(s.score >= before + 3 * 10 + 100, 'the same squares and line score again');
   assert.equal(await page.evaluate(() => bingos.at(-1).totalLines), 2);
   // Hiding the tab clears a due line at once, so the game is never left with a complete line.
   await visibility(true);
   s = await state();
-  assert.deepEqual([s.lines, s.checked.some(Boolean)], [[], false]);
+  assert.deepEqual([s.lines, s.checked.filter(Boolean).length], [[], 1]);
   await visibility(false);
   // Neither taps nor shuffles are reported or saved; setChecked goes to the packing card.
   await page.evaluate(() => card.shuffle());
@@ -341,7 +344,7 @@ try {
   assert.equal((await state()).checked[0], true);
   await page.waitForTimeout(1300);
   s = await state();
-  assert.equal(s.checked.some(Boolean), false);
+  assert.deepEqual([s.lines, s.checked.filter(Boolean).length <= 1], [[], true], 'more stamps come off when every line must open');
   assert.deepEqual(await page.evaluate(() => perfects), []);
   // Taps elsewhere and refresh() must not push a due clear back. 3×3 with FREE: the middle row is items 3 and 4.
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite', size: 3, free: true }); });
@@ -349,17 +352,94 @@ try {
   await check(4);
   assert.deepEqual((await state()).lines, [1], 'a line through the FREE center');
   for (const i of [0, 2, null, null]) {
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(80);
     if (i !== null) await check(i); // neither completes a line
     await page.evaluate(() => card.refresh());
   }
   s = await state();
   assert.deepEqual([s.checked[3], s.checked[4], s.checked[0], s.checked[2], s.lines, s.cleared], [false, false, true, true, [], 1], 'the line cleared on time');
+  // A double bingo (top row and left column, crossing at square 0) also loses just three stamps.
+  await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
+  for (const i of [1, 2, 3, 4, 8, 12, 0]) await check(i);
+  assert.equal((await state()).lines.length, 2);
+  await page.waitForTimeout(450); // before any stamp is a second old (see below)
+  s = await state();
+  const kept = s.checked.flatMap((c, i) => (c ? [i] : []));
+  assert.deepEqual([s.lines, s.cleared, kept.length], [[], 2, 4], 'a double bingo loses three stamps');
+  assert.ok(kept.every((i) => [0, 1, 2, 3, 4, 8, 12].includes(i)));
+  // Stamps also come off without a bingo: every second, one random stamp that is at least a second old.
+  await page.evaluate(() => { card.destroy(); bingos = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite', onBingo: e => bingos.push(e) }); });
+  await check(0);
+  await check(5);
+  await page.waitForTimeout(700);
+  assert.equal((await state()).checked.filter(Boolean).length, 2, 'no stamp comes off before it is a second old');
+  await page.waitForTimeout(550);
+  s = await state();
+  assert.deepEqual([s.checked.filter(Boolean).length, s.lines, await page.evaluate(() => bingos.length)], [1, [], 0], 'one stamp came off without a bingo');
+  const faded = s.checked[0] ? 5 : 0;
+  const before0 = s.score;
+  await page.evaluate((i) => document.querySelectorAll('#app input')[i].click(), faded);
+  assert.ok((await state()).score > before0, 'a faded square scores again');
+  // Again from two stamps, one of which has come off: the other must wait while the tab is hidden.
+  await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
+  await check(0);
+  await check(5);
+  await page.waitForTimeout(1250);
+  assert.equal((await state()).checked.filter(Boolean).length, 1);
+  await visibility(true);
+  await page.waitForTimeout(1200);
+  assert.equal((await state()).checked.filter(Boolean).length, 1, 'nothing comes off while the tab is hidden');
+  await visibility(false);
+  await page.waitForTimeout(250);
+  assert.equal((await state()).checked.filter(Boolean).length, 0, 'and it goes on when the tab is back');
+  // Every 100 combo: 5 seconds of double points, with its own look, sound and buzz.
+  const FEVER_BUZZ = [50, 40, 60, 30, 80, 25, 110, 30, 450];
+  const lineGain = (pts, mult) => [0, 1, 2, 3, 4].map((k) => 100 * k * k * mult).includes(pts);
+  /** Tap free squares (waiting for clears when the card is full) until `n` taps; returns the last tap's gain. */
+  const tapFree = (n) => page.evaluate(async (n) => {
+    let gain = 0, taps = 0;
+    for (let tries = 0; taps < n && tries < 4000; tries++) {
+      const free = [...document.querySelectorAll('#app input')].find((x) => !x.checked);
+      if (free) {
+        const a = card.getState().score;
+        free.click();
+        gain = card.getState().score - a;
+        taps++;
+      }
+      if (taps < n) await new Promise((r) => setTimeout(r, 25));
+    }
+    if (taps < n) throw new Error(`only ${taps} of ${n} taps found a free square`);
+    return gain;
+  }, n);
+  const fever = () => page.locator('#app .pkb-board.pkb-fever').count();
+  await page.evaluate(() => { card.destroy(); buzzes = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, mode: 'infinite' }); });
+  await tapFree(99);
+  assert.deepEqual([(await state()).maxCombo, await fever()], [99, 0], 'no fever before 100 combo');
+  let gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10 * 100 * 2, 2), `the 100th tap scores double (${gain})`);
+  assert.equal(await fever(), 1);
+  assert.equal(await page.locator('#app [data-r="fvSr"]').textContent(), 'FEVER! 5秒間ポイント2倍！');
+  assert.deepEqual(await page.locator('#app .pkb-float.pkb-x2').last().evaluate((e) => [getComputedStyle(e).visibility, getComputedStyle(e).position, e.textContent]), ['visible', 'absolute', '+2000'], 'the doubled points float up, visible');
+  assert.deepEqual((await patterns()).at(-1), FEVER_BUZZ, 'the fever has its own buzz');
+  gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10 * 101 * 2, 2), `taps in the fever score double (${gain})`);
+  await page.waitForTimeout(5100);
+  assert.deepEqual([await fever(), await page.locator('#app [data-r="fvSr"]').textContent()], [0, ''], 'the fever ends after 5 seconds');
+  gain = await tapFree(1); // the combo broke while waiting
+  assert.ok(lineGain(gain - 10, 1), `points are back to normal (${gain})`);
+  // A hidden tab (like a new game or a mode switch) ends a fever at once.
+  await tapFree(99);
+  assert.equal(await fever(), 1, 'every 100 combo');
+  await visibility(true);
+  assert.equal(await fever(), 0);
+  await visibility(false);
+  gain = await tapFree(1);
+  assert.ok(lineGain(gain - 10, 1), `no double points after it (${gain})`);
   // A controlled card plays the infinite game by itself, without asking the parent.
   await page.evaluate(() => { card.destroy(); changes = []; card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, ready: false, controlled: true, mode: 'infinite', onChange: c => changes.push(c) }); });
   await check(0);
   assert.deepEqual([(await state()).checked[0], await page.evaluate(() => changes.length)], [true, 0]);
-  // The switch stays usable above the start screen; reset starts a new infinite game.
+  // The switch stays usable above the start screen; reset() starts a new infinite game.
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, mode: 'infinite' }); });
   assert.equal(await page.locator('#app .pkb-ready-b').isVisible(), true, 'the start screen shows the infinite badge');
   assert.equal(await page.locator('#app .pkb-ready-r').isVisible(), true, 'and the rule');
@@ -369,7 +449,8 @@ try {
   await page.locator('#app .pkb-ready').click();
   await page.waitForTimeout(3100);
   await check(0);
-  await page.locator('#app [data-r="reset"]').click();
+  assert.deepEqual([await page.locator('#app [data-r="reset"]').isVisible(), await page.locator('#app [data-r="fin"]').textContent()], [false, '🏁 FINISH'], 'one button in the infinite mode: FINISH while playing');
+  await page.evaluate(() => card.reset());
   s = await state();
   assert.deepEqual([s.mode, s.checked.some(Boolean), s.score, s.time], ['infinite', false, 0, 0]);
   assert.equal(await page.locator('#app .pkb-ready:not([hidden])').count(), 1);
@@ -383,18 +464,19 @@ try {
   assert.deepEqual([await fin.isVisible(), await fin.isDisabled()], [true, true], 'FINISH waits for the game to start');
   for (const i of [0, 1, 2, 3, 5]) await check(i);
   assert.equal(await fin.isDisabled(), false);
-  await page.waitForTimeout(300); // the row is still about to clear
+  // The row is still about to clear.
   await fin.click();
   s = await state();
   const fe = await page.evaluate(() => fins[0]);
-  assert.deepEqual([s.finished, s.lines, s.checked.filter(Boolean).length], [true, [], 1], 'a due clear settles first');
+  assert.deepEqual([s.finished, s.lines, s.checked.filter(Boolean).length], [true, [], 2], 'a due clear settles first');
   assert.deepEqual(fe, { score: s.score, maxCombo: 5, lines: 1, time: s.time });
   assert.equal(s.score, 10 + 20 + 30 + 40 + 100 + 50);
   assert.deepEqual((await patterns()).at(-1), [120, 40, 120, 40, 320]);
   assert.equal(await page.locator('#app .pkb-perfect.pkb-show.pkb-fin').count(), 1, 'the results open at once');
   assert.equal(await page.locator('#app [data-r="ptitle"]').textContent(), 'フィニッシュ！');
   assert.equal(await page.evaluate(() => document.activeElement.dataset.r), 'again');
-  assert.deepEqual([await page.locator('#app .pkb-grid[inert]').count(), await fin.isDisabled(), await page.locator('#app [data-r="shuf"]').isDisabled()], [1, true, true], 'the finished board is locked');
+  assert.deepEqual([await page.locator('#app .pkb-grid[inert]').count(), await page.locator('#app [data-r="shuf"]').isDisabled()], [1, true], 'the finished board is locked');
+  assert.deepEqual([await fin.textContent(), await fin.isDisabled()], ['リセット', false], 'FINISH turns into reset');
   const order0 = s.order;
   await page.evaluate(() => card.shuffle());
   await page.waitForTimeout(300);
@@ -408,6 +490,13 @@ try {
   s = await state();
   assert.deepEqual([s.mode, s.finished, s.score, s.cleared, s.checked.some(Boolean), s.time], ['infinite', false, 0, 0, false, 0], 'play again starts a new infinite game');
   assert.deepEqual([await page.locator('#app .pkb-perfect.pkb-show').count(), await page.locator('#app .pkb-grid[inert]').count()], [0, 0]);
+  // Or close the results and press the リセット that FINISH turned into.
+  await check(0);
+  await fin.click();
+  await page.locator('#app [data-r="close"]').click();
+  await fin.click();
+  s = await state();
+  assert.deepEqual([s.finished, s.checked.some(Boolean), s.score, s.time, await fin.textContent(), await fin.isDisabled()], [false, false, 0, 0, '🏁 FINISH', true], 'the reset after FINISH starts a new game');
   // FINISH, then back to the packing card: it must be playable again, partial or complete.
   for (const packed of [[3, 7], Array.from({ length: 16 }, (_, i) => i)]) {
     const complete = packed.length === 16;
@@ -448,7 +537,7 @@ try {
   await page.evaluate(() => { card.destroy(); card = PackingBingo.createPackingBingo(document.getElementById('app'), { storageKey: null, modeSwitch: false }); });
   assert.equal(await page.locator('#app .pkb-mode').count(), 0);
   assert.deepEqual(errors, []);
-  console.log('PASS: start screen, countdown and stopwatch; stamps stay stamped (uncheck: true opts out); infinite mode and the mode switch; feedback patterns, combo, ownership, reset/shuffle/destroy, controlled keyboard, reduced motion, layouts, winning stamp, and persistent perfect results; no browser errors.');
+  console.log('PASS: start screen, countdown and stopwatch; stamps stay stamped (uncheck: true opts out); infinite mode, its fading stamps and fever, and the mode switch; feedback patterns, combo, ownership, reset/shuffle/destroy, controlled keyboard, reduced motion, layouts, winning stamp, and persistent perfect results; no browser errors.');
 }
 finally {
   await browser.close();

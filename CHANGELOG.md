@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0 (2026-11-16)
+
+### Added
+
+- Infinite mode: stamps also come off without a bingo. Every second, one random stamp that is at least a second old flips over and comes off with a soft sound (never the squares of a line that is about to clear). It pauses while the tab is hidden.
+- Infinite mode fever: every 100 combo (100, 200, …) starts 5 seconds of double points for squares and lines, from the tap that reaches it. A huge rainbow FEVER! title slams in over a pulsing rainbow glow and a sweeping rainbow wash, with fireworks, side cannons, confetti, falling 🔥✨💎 emoji, sparks all over the card, a riser-and-boom sound, its own Android vibration and a closing jingle; points float up in gold, and the score gets a rainbow look, a ×2 badge and a 5-second bar. A hidden tab, reset, a mode switch and FINISH end it at once. Optional message keys `feverTitle` and `feverSub`. Reduced motion fades the title and keeps the glow still.
+
+### Changed
+
+- Infinite mode: a completed line no longer clears all of its stamps. About 0.2 seconds after its bingo (1 second in 0.6.0), three random stamps of the line flip over, faster than before, and come off (all of them on a line of three or fewer), and the rest stay, so the line is open again after three more taps. When several lines complete at once, more stamps come off if three would leave a line complete. The default `infiniteRule` messages now describe the fading stamps, the three-stamp clear and the fever.
+- Infinite mode: the reset button is hidden. 🏁 FINISH takes its place while a game runs (disabled until it starts) and turns into リセット (Reset) once the game is over, which starts a new infinite game. `reset()` still restarts the infinite game at any time.
+
 ## 0.6.0 (2026-11-15)
 
 ### Added

@@ -1,9 +1,11 @@
 # Builds the package and deploys the demo site (site/ + the fresh browser bundle) to GitHub Pages.
+# A push to a preview/* branch deploys that branch at /preview/, next to the demo built from main;
+# the next deploy from main drops it again.
 name: Demo site
 
 on:
   push:
-    branches: [main]
+    branches: [main, "preview/**"]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +29,20 @@ jobs:
       - run: npm ci # also builds dist/ and index.html (prepare)
       - run: npm run typecheck
       - run: node scripts/build-site.mjs
+      # Preview branches: the build above goes to /preview/, and the root stays the demo from main.
+      - if: startsWith(github.ref, 'refs/heads/preview/')
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: main-site
+      - if: startsWith(github.ref, 'refs/heads/preview/')
+        working-directory: main-site
+        run: npm ci && node scripts/build-site.mjs
+      - if: startsWith(github.ref, 'refs/heads/preview/')
+        run: |
+          mv _site "$RUNNER_TEMP/preview"
+          mv main-site/_site _site
+          mv "$RUNNER_TEMP/preview" _site/preview
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
