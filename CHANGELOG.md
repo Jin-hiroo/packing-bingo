@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- New default items (`DEFAULT_ITEMS`), also used by the demo pages and the examples: uniform (first day), dark sneakers, school tracksuit, work gloves, headlamp, rain gear, health form, wallet, power bank, My Number insurance card, medicine, sunscreen, handkerchief / tissues / mask, plastic bags, writing tools, trip booklet. Phone and towel are no longer in the defaults.
+
 ## 0.7.0 (2026-11-16)
 
 ### Added

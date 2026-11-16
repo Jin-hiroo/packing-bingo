@@ -150,22 +150,22 @@ import { PackingBingo, type BingoItem } from "packing-bingo";
 // 持ち物。16個なら、左上から横に4つずつ並びます。
 // \u200B は「狭い画面ではここで改行してよい」という目印です（画面には出ません）。
 const items: BingoItem[] = [
-  { emoji: "👛", label: "財布" },
-  { emoji: "📱", label: "スマホ" },
-  { emoji: "🔋", label: "モバイル\u200B充電器" },
-  { emoji: "📋", label: "健康調査票" },
-  { emoji: "🪪", label: "マイナカード\u200Bまたは保険証" },
-  { emoji: "📖", label: "しおり" },
-  { emoji: "😷", label: "マスク" },
-  { emoji: "🤧", label: "ハンカチ" },
-  { emoji: "💊", label: "常備薬" },
-  { emoji: "🛍️", label: "ビニール袋" },
+  { emoji: "👔", label: "制服\u200B（初日）" },
+  { emoji: "👟", label: "黒系\u200Bスニーカー" },
+  { emoji: "👕", label: "学園指定\u200Bジャージ" },
   { emoji: "🧤", label: "軍手（学校支給）" },
   { emoji: "🔦", label: "ヘッドライト" },
-  { emoji: "👕", label: "ジャージ" },
   { emoji: "☔", label: "雨具" },
-  { emoji: "🛁", label: "タオル" },
+  { emoji: "📋", label: "健康調査票" },
+  { emoji: "👛", label: "財布" },
+  { emoji: "🔋", label: "モバイル\u200B充電器" },
+  { emoji: "🪪", label: "マイナ保険証" },
+  { emoji: "💊", label: "常備薬" },
   { emoji: "🧴", label: "日焼け止め" },
+  { emoji: "🤧", label: "ハンカチ・\u200Bティッシュ・\u200Bマスク" },
+  { emoji: "🛍️", label: "ビニール袋" },
+  { emoji: "✏️", label: "筆記用具" },
+  { emoji: "📖", label: "しおり" },
 ];
 
 // JSXの中の、表示したい場所に
@@ -183,14 +183,14 @@ HTMLの好きな場所に、次をそのまま貼り付けます。インスト�
 <script>
   PackingBingo.createPackingBingo(document.getElementById("packing-bingo"), {
     items: [
-      { emoji: "👛", label: "財布" }, { emoji: "📱", label: "スマホ" },
-      { emoji: "🔋", label: "モバイル\u200B充電器" }, { emoji: "📋", label: "健康調査票" },
-      { emoji: "🪪", label: "マイナカード\u200Bまたは保険証" }, { emoji: "📖", label: "しおり" },
-      { emoji: "😷", label: "マスク" }, { emoji: "🤧", label: "ハンカチ" },
-      { emoji: "💊", label: "常備薬" }, { emoji: "🛍️", label: "ビニール袋" },
-      { emoji: "🧤", label: "軍手（学校支給）" }, { emoji: "🔦", label: "ヘッドライト" },
-      { emoji: "👕", label: "ジャージ" }, { emoji: "☔", label: "雨具" },
-      { emoji: "🛁", label: "タオル" }, { emoji: "🧴", label: "日焼け止め" },
+      { emoji: "👔", label: "制服\u200B（初日）" }, { emoji: "👟", label: "黒系\u200Bスニーカー" },
+      { emoji: "👕", label: "学園指定\u200Bジャージ" }, { emoji: "🧤", label: "軍手（学校支給）" },
+      { emoji: "🔦", label: "ヘッドライト" }, { emoji: "☔", label: "雨具" },
+      { emoji: "📋", label: "健康調査票" }, { emoji: "👛", label: "財布" },
+      { emoji: "🔋", label: "モバイル\u200B充電器" }, { emoji: "🪪", label: "マイナ保険証" },
+      { emoji: "💊", label: "常備薬" }, { emoji: "🧴", label: "日焼け止め" },
+      { emoji: "🤧", label: "ハンカチ・\u200Bティッシュ・\u200Bマスク" }, { emoji: "🛍️", label: "ビニール袋" },
+      { emoji: "✏️", label: "筆記用具" }, { emoji: "📖", label: "しおり" },
     ],
   });
 </script>
